@@ -20,7 +20,13 @@ Any item that is equal to, or inside, one of these paths is **rejected**:
 - `/Applications/*.app` for Apple apps (bundle ID starting `com.apple.`), and everything under `/System/Applications`
 - Exactly the home folder `~`, and exactly `~/Library`, `~/Documents`, `~/Desktop`, `~/Downloads` (folders *inside* these are allowed)
 - Spacera's own bundle and its Application Support folder
-- Symbolic links whose target is outside the item's parent folder (they're resolved first, then checked again)
+- **Cloud and personal stores, at any depth:** `~/Library/Mobile Documents` (iCloud Drive) and `~/Library/CloudStorage` (Dropbox, OneDrive, Google Drive). Deleting from these deletes from the cloud. Also `Keychains`, `Mail`, `Messages`, `Photos`, `Accounts`, `Calendars`, `Safari`, and the Photos library.
+- Direct children of `~/Library` and `/Library` (for example `~/Library/Caches` itself). Only items *inside* them can be removed.
+- Anything outside the home folder, `/Library`, `/Applications`, and `/Users/Shared` (other users, other volumes).
+- Any path containing `.` or `..` components. This is checked before the path is normalized.
+- Paths that reach a protected area through a symlinked folder. Symlinks in the parent folders are resolved and the path is checked again. Trashing a symlink itself only moves the link.
+
+Items in `/Library` usually belong to root. When moving one to the Trash fails with a permission error, Spacera says so and offers Reveal in Finder. Admin-authorized removal is on the backlog.
 
 ## Other checks
 - **The owning app is running.** If `NSRunningApplication` finds the app that owns the data running, Spacera warns the user and offers "Quit app first."
@@ -46,7 +52,7 @@ The Cleanup screen shows recent batches with **Show in Trash** and **Put Back**.
 | Unavailable simulators | from `xcrun simctl list -j` (`isAvailable == false`) | safe |
 | `node_modules` | found during the scan | review |
 | Package caches | `~/.npm/_cacache`, `~/Library/pnpm/store`, `~/Library/Caches/Homebrew`, `~/Library/Caches/pip`, `~/.gradle/caches`, `~/Library/Caches/CocoaPods`, `~/.cargo/registry/cache` | safe |
-| Large files | files over 1 GB anywhere in the scan | userData |
+| Large files | files over 1 GB in your own folders (not `~/Library`, apps, iCloud, or the Trash) | userData |
 | Old downloads | `~/Downloads/*` not modified in more than 90 days | review |
 | iOS backups | `~/Library/Application Support/MobileSync/Backup/*` | userData |
 | Mail downloads | `~/Library/Containers/com.apple.mail/Data/Library/Mail Downloads` | review |
