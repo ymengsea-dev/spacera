@@ -8,7 +8,7 @@ struct SpaceraApp: App {
         WindowGroup {
             RootView()
                 .environment(environment)
-                .frame(minWidth: 900, minHeight: 600)
+                .frame(minWidth: 960, minHeight: 620)
         }
         .commands {
             CommandGroup(after: .appInfo) {
@@ -16,6 +16,19 @@ struct SpaceraApp: App {
                     environment.updater.checkForUpdates()
                 }
                 .disabled(!environment.updater.isConfigured)
+            }
+            CommandMenu("Scan") {
+                Button(environment.store.result == nil ? "Scan Disk" : "Rescan") {
+                    environment.store.startScan()
+                }
+                .keyboardShortcut("r")
+                .disabled(environment.store.phase.isWorking)
+
+                Button("Stop Scan") {
+                    environment.store.cancelScan()
+                }
+                .keyboardShortcut(".")
+                .disabled(!environment.store.phase.isWorking)
             }
         }
     }
