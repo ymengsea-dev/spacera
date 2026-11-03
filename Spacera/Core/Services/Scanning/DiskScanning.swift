@@ -4,6 +4,11 @@ struct ScanOptions: Sendable {
     /// Files smaller than this are merged into one "N small files" node per directory, to save memory.
     /// Their bytes still count toward every total.
     var smallFileThreshold: Int64 = 256 * 1024
+    /// Inside `…/Library/<name>` folders with these names, files are never merged, because app
+    /// attribution needs their individual names (preference files, background-item plists, helper tools).
+    var individualFileFolders: Set<String> = [
+        "Preferences", "LaunchAgents", "LaunchDaemons", "PrivilegedHelperTools", "Cookies", "HTTPStorages",
+    ]
     /// Directories this deep or shallower are scanned in parallel; deeper ones are scanned on the same task.
     var parallelDepth: Int = 3
     /// Don't cross into other mounted volumes.

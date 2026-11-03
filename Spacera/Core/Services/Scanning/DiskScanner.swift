@@ -82,7 +82,7 @@ struct DiskScanner: DiskScanning {
         var subdirectories: [(FileNode, String)] = []
         var smallBytes: Int64 = 0
         var smallCount = 0
-        let threshold = context.options.smallFileThreshold
+        let threshold = Self.keepsIndividualFiles(path: path, options: context.options) ? 0 : context.options.smallFileThreshold
 
         for entry in entries {
             let childPath = path.hasSuffix("/") ? path + entry.name : path + "/" + entry.name
@@ -137,6 +137,13 @@ struct DiskScanner: DiskScanning {
         }
 
         node.finalize(children: children)
+    }
+
+    /// True for `…/Library/<name>` folders listed in `individualFileFolders`.
+    static func keepsIndividualFiles(path: String, options: ScanOptions) -> Bool {
+        let components = path.split(separator: "/")
+        guard components.count >= 2, components[components.count - 2] == "Library" else { return false }
+        return options.individualFileFolders.contains(String(components[components.count - 1]))
     }
 
     // MARK: - getattrlistbulk

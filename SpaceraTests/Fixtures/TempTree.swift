@@ -50,6 +50,28 @@ final class TempTree {
         try fileManager.createSymbolicLink(at: root.appendingPathComponent(relativePath), withDestinationURL: destination)
     }
 
+    /// Creates a minimal fake `.app` bundle with an Info.plist and an executable of `bytes` bytes.
+    @discardableResult
+    func app(_ relativePath: String, bundleID: String?, name: String? = nil, version: String = "1.0", bytes: Int = 500_000) throws -> URL {
+        let url = try directory(relativePath)
+        var info: [String: Any] = ["CFBundleShortVersionString": version, "CFBundlePackageType": "APPL"]
+        if let bundleID { info["CFBundleIdentifier"] = bundleID }
+        if let name { info["CFBundleName"] = name }
+        try directory(relativePath + "/Contents/MacOS")
+        let data = try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+        try data.write(to: url.appendingPathComponent("Contents/Info.plist"))
+        try file(relativePath + "/Contents/MacOS/main", bytes: bytes)
+        return url
+    }
+
+    /// Writes a property list (for example, a launchd plist).
+    func plist(_ relativePath: String, _ contents: [String: Any]) throws {
+        let url = root.appendingPathComponent(relativePath)
+        try fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let data = try PropertyListSerialization.data(fromPropertyList: contents, format: .xml, options: 0)
+        try data.write(to: url)
+    }
+
     func url(_ relativePath: String) -> URL { root.appendingPathComponent(relativePath) }
 
     /// The reference answer: allocated size as Foundation reports it, counting each hard link once

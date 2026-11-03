@@ -143,4 +143,31 @@ struct DiskScannerTests {
         #expect(ScanResult.logicalPath("/System/Volumes/Data/Users/me") == "/Users/me")
         #expect(ScanResult.logicalPath("/System/Volumes/Data") == "/")
     }
+
+    @Test func hiddenFilesAndDotFoldersAreCounted() async throws {
+        let tree = try TempTree()
+        try tree.file(".npm/_cacache/blob.bin", bytes: 800_000)
+        let flagged = try tree.file("visible-name-but-hidden.bin", bytes: 600_000)
+        chflags(flagged.path, UInt32(UF_HIDDEN))
+
+        let result = try await scanner.scanTree(root: tree.root)
+
+        #expect(result.root.child(named: ".npm")?.size ?? 0 > 0)
+        #expect(result.root.child(named: "visible-name-but-hidden.bin") != nil)
+        #expect(result.root.size == (try tree.expectedAllocatedSize()))
+    }
+
+    @Test func libraryPreferenceFilesKeepTheirNames() async throws {
+        let tree = try TempTree()
+        try tree.file("Library/Preferences/com.example.app.plist", bytes: 2_000)
+        try tree.file("Library/Preferences/com.other.app.plist", bytes: 2_000)
+        try tree.file("Other/a.txt", bytes: 2_000)
+        try tree.file("Other/b.txt", bytes: 2_000)
+
+        let result = try await scanner.scanTree(root: tree.root)
+
+        let prefs = try #require(result.root.descendant(at: ["Library", "Preferences"]))
+        #expect(Set(prefs.children.map(\.name)) == ["com.example.app.plist", "com.other.app.plist"])
+        #expect(result.root.child(named: "Other")?.children.count == 1) // merged into "2 small files"
+    }
 }
