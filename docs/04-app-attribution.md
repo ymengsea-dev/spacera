@@ -41,11 +41,12 @@ The system's own apps in `/System/Applications` are listed for information only.
 
 **Overrides (`AttributionOverrides`):** an *optional* hand-maintained table that only adds extra paths. Every app is matched by the general rules above without it. If an installed app's bundle ID matches an override exactly, only that app gets it. Prefix matches (for example `com.google.Chrome.app.<id>` web-app shims) are used only when no app matches exactly. The table lists for apps whose data lives in unusual places:
 - **Xcode:** `~/Library/Developer/Xcode/DerivedData`, `Archives`, `iOS DeviceSupport`, and `~/Library/Developer/CoreSimulator`.
-- **Docker:** `~/Library/Containers/com.docker.docker` (`Docker.raw`).
+- **Docker:** `~/.docker`. (`~/Library/Containers/com.docker.docker`, which holds `Docker.raw`, is matched by the general rules.)
 - **VS Code:** `~/Library/Application Support/Code`, `~/.vscode`.
-- **JetBrains IDEs:** `~/Library/Caches/JetBrains/<Product>*`, `~/Library/Application Support/JetBrains/<Product>*`.
-- **Unity:** `~/Library/Unity`, `~/Library/Caches/com.unity3d.*`.
-- **Adobe:** `~/Library/Application Support/Adobe/<Product>`, `~/Library/Caches/Adobe`.
+- **JetBrains IDEs and Android Studio:** `Caches`, `Logs`, and `Application Support` under `JetBrains/<Product>*` (or `Google/AndroidStudio*`).
+- **Unity Hub:** `~/Library/Unity`, `~/Library/Application Support/UnityHub`.
+- **Chrome:** `~/Library/Application Support/Google/Chrome`, `~/Library/Caches/Google/Chrome`.
+- *Not yet:* Adobe's shared `Adobe/` folders serve several products, so they're left unattributed for now.
 - **Steam:** `~/Library/Application Support/Steam` (games).
 - **Ollama:** `~/.ollama`.
 
