@@ -58,6 +58,7 @@ struct World {
             planner: CleanupPlanner(guardrail: guardrail, runningApps: FakeRunningApps(ids: [])),
             trasher: Trasher(guardrail: guardrail, log: log),
             log: log,
+            snapshots: ScanSnapshotStore(fileURL: tree.url("log/snapshots.json")),
             access: FakeAccess(granted: access)
         )
         store = ScanStore(services: services)
@@ -224,5 +225,64 @@ struct SunburstLayoutTests {
         let second = SunburstLayout.hitTest(arcs, point: CGPoint(x: 100, y: 65), center: center, innerRadius: 20, ringWidth: 10)
         #expect(second?.title == "one.bin")
         #expect(SunburstLayout.hitTest(arcs, point: center, center: center, innerRadius: 20, ringWidth: 10) == nil)
+    }
+}
+
+struct SnapshotTests {
+    func snapshot(date: Date, used: Int64, apps: [(String, Int64)], categories: [(String, Int64)] = [], limited: Bool = false) -> ScanSnapshot {
+        ScanSnapshot(
+            id: UUID(), date: date,
+            volume: VolumeInfo(name: "HD", totalCapacity: 1_000_000_000_000, availableCapacity: 1_000_000_000_000 - used, availableForImportantUsage: 1_000_000_000_000 - used),
+            isLimitedScan: limited,
+            apps: apps.map { .init(key: $0.0, name: $0.0, path: "/Applications/\($0.0).app", bundleSize: 0, dataSize: $0.1) },
+            categories: categories.map { .init(ruleID: $0.0, title: $0.0, bytes: $0.1) },
+            leftoverBytes: 0, safeReclaimable: 0
+        )
+    }
+
+    @Test func growthReportsChangesAboveThreshold() {
+        let old = snapshot(date: Date(timeIntervalSince1970: 0), used: 500_000_000_000,
+                           apps: [("grows", 1_000_000_000), ("same", 2_000_000_000), ("shrinks", 3_000_000_000), ("removed", 900_000_000)],
+                           categories: [("xcode.derivedData", 10_000_000_000)])
+        let new = snapshot(date: Date(timeIntervalSince1970: 100), used: 505_000_000_000,
+                           apps: [("grows", 4_000_000_000), ("same", 2_010_000_000), ("shrinks", 1_000_000_000), ("added", 700_000_000)],
+                           categories: [("xcode.derivedData", 15_000_000_000)])
+
+        let report = GrowthReport.compare(previous: old, current: new)
+
+        #expect(report.usedDelta == 5_000_000_000)
+        #expect(report.apps.map(\.id) == ["grows", "added", "removed", "shrinks"])
+        #expect(report.apps.first { $0.id == "added" }?.isNew == true)
+        #expect(report.apps.first { $0.id == "removed" }?.delta == -900_000_000)
+        #expect(report.categories.map(\.delta) == [5_000_000_000])
+        #expect(!report.comparesDifferentScopes)
+    }
+
+    @Test func storeKeepsNewestAndPersists() async throws {
+        let tree = try TempTree()
+        let url = tree.url("snapshots.json")
+        let store = ScanSnapshotStore(fileURL: url)
+        for i in 0..<(ScanSnapshotStore.maxSnapshots + 5) {
+            await store.append(snapshot(date: Date(timeIntervalSince1970: Double(i)), used: 1, apps: []))
+        }
+        let reloaded = ScanSnapshotStore(fileURL: url)
+        #expect(await reloaded.all().count == ScanSnapshotStore.maxSnapshots)
+        #expect(await reloaded.latest()?.date == Date(timeIntervalSince1970: Double(ScanSnapshotStore.maxSnapshots + 4)))
+    }
+
+    @MainActor
+    @Test func secondScanProducesGrowthReport() async throws {
+        let world = try await World()
+        #expect(world.store.growth == nil) // first scan: nothing to compare with
+        #expect(world.store.lastSnapshot?.apps.first?.name == "Zeta")
+
+        world.store.startScan()
+        await world.store.waitForScan()
+        let growth = try #require(world.store.growth)
+        #expect(growth.apps.isEmpty) // nothing changed
+
+        let fresh = ScanStore(services: world.store.services)
+        await fresh.loadLastSnapshot()
+        #expect(fresh.lastSnapshot != nil) // available at the next launch
     }
 }

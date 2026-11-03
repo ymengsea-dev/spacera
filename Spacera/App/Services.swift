@@ -11,10 +11,11 @@ struct Services: Sendable {
     var planner = CleanupPlanner()
     var trasher: any TrashPerforming
     var log: ActionLog
+    var snapshots: ScanSnapshotStore
     var access: any FullDiskAccessChecking = FullDiskAccess()
 
     static func live() -> Services {
         let log = ActionLog()
-        return Services(trasher: Trasher(log: log), log: log)
+        return Services(trasher: Trasher(log: log), log: log, snapshots: ScanSnapshotStore())
     }
 }

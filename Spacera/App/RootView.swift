@@ -53,6 +53,7 @@ struct RootView: View {
             OnboardingView()
         }
         .onAppear { env.onboarding.presentIfNeeded() }
+        .task { await env.store.loadLastSnapshot() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             env.onboarding.appDidBecomeActive()
         }

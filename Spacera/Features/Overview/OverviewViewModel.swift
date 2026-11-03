@@ -68,5 +68,13 @@ final class OverviewViewModel {
         Array(store.findings.filter { $0.rule.safety != .infoOnly }.sorted { $0.totalSize > $1.totalSize }.prefix(4))
     }
 
+    var growth: GrowthReport? { store.growth }
+    var lastSnapshot: ScanSnapshot? { store.lastSnapshot }
+
+    var hasGrowthToShow: Bool {
+        guard let growth else { return false }
+        return !growth.apps.isEmpty || !growth.categories.isEmpty || abs(growth.usedDelta) >= GrowthReport.threshold
+    }
+
     func startScan() { store.startScan() }
 }

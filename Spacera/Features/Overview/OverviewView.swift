@@ -29,6 +29,7 @@ struct OverviewDashboard: View {
         VStack(alignment: .leading, spacing: 20) {
             if model.isLimitedScan { LimitedScanBanner() }
             CapacityCard(model: model)
+            if model.hasGrowthToShow, let growth = model.growth { GrowthCard(growth: growth) }
             HStack(alignment: .top, spacing: 20) {
                 TopAppsCard(model: model, onSeeAll: { onNavigate(.apps) })
                 VStack(spacing: 20) {
@@ -59,6 +60,7 @@ private struct EmptyScanView: View {
             if env.store.phase.isWorking {
                 ScanProgressView()
             } else {
+                if let last = env.overview.lastSnapshot { LastScanSummary(snapshot: last) }
                 Button {
                     env.store.startScan()
                 } label: {
@@ -80,6 +82,96 @@ private struct EmptyScanView: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Shown on the start screen: the results of the last scan, saved on disk.
+private struct LastScanSummary: View {
+    var snapshot: ScanSnapshot
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Last scan").font(.headline)
+                Spacer()
+                Text(snapshot.date, format: .relative(presentation: .named)).foregroundStyle(.secondary)
+            }
+            HStack(spacing: 24) {
+                Metric(title: "Used", value: snapshot.volume.usedCapacity.formattedBytes)
+                Metric(title: "Free", value: snapshot.volume.availableCapacity.formattedBytes)
+                Metric(title: "Safe to clean", value: snapshot.safeReclaimable.formattedBytes)
+            }
+            HStack(spacing: 8) {
+                ForEach(snapshot.apps.sorted { $0.total > $1.total }.prefix(6), id: \.key) { app in
+                    AppIconView(path: FileManager.default.fileExists(atPath: app.path) ? app.path : nil, size: 30)
+                        .help("\(app.name): \(app.total.formattedBytes)")
+                }
+            }
+        }
+        .frame(width: 420)
+        .card()
+    }
+
+    private struct Metric: View {
+        var title: String
+        var value: String
+        var body: some View {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.caption).foregroundStyle(.secondary)
+                Text(value).font(.title3.weight(.semibold)).monospacedDigit()
+            }
+        }
+    }
+}
+
+private struct GrowthCard: View {
+    var growth: GrowthReport
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Label("Changes Since Last Scan", systemImage: "chart.line.uptrend.xyaxis").font(.headline)
+                Text(growth.previousDate, format: .relative(presentation: .named)).foregroundStyle(.secondary)
+                Spacer()
+                DeltaLabel(delta: growth.usedDelta, suffix: " used")
+            }
+            if growth.comparesDifferentScopes {
+                Text("The previous scan covered a different area (Full Disk Access changed), so app sizes may not be comparable.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            let changes = Array((growth.apps + growth.categories).sorted { abs($0.delta) > abs($1.delta) }.prefix(6))
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), alignment: .leading)], alignment: .leading, spacing: 8) {
+                ForEach(changes) { change in
+                    HStack(spacing: 8) {
+                        if let path = change.iconPath, FileManager.default.fileExists(atPath: path) {
+                            AppIconView(path: path, size: 22)
+                        } else {
+                            Image(systemName: change.iconPath == nil ? "folder" : "app.dashed")
+                                .frame(width: 22).foregroundStyle(.secondary)
+                        }
+                        Text(change.title).lineLimit(1)
+                        if change.isNew { Text("new").font(.caption2).padding(.horizontal, 4).background(.quaternary, in: Capsule()) }
+                        Spacer()
+                        DeltaLabel(delta: change.delta)
+                    }
+                    .font(.callout)
+                }
+            }
+        }
+        .card()
+    }
+}
+
+private struct DeltaLabel: View {
+    var delta: Int64
+    var suffix: String = ""
+
+    var body: some View {
+        let grew = delta > 0
+        Label((grew ? "+" : "−") + abs(delta).formattedBytes + suffix, systemImage: grew ? "arrow.up" : "arrow.down")
+            .font(.callout.weight(.medium)).monospacedDigit()
+            .foregroundStyle(grew ? .orange : .green)
+            .accessibilityLabel((grew ? "Grew by " : "Shrank by ") + abs(delta).formattedBytes)
     }
 }
 

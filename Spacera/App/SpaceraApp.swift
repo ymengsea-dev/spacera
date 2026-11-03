@@ -10,6 +10,9 @@ struct SpaceraApp: App {
                 .environment(environment)
                 .frame(minWidth: 960, minHeight: 620)
         }
+        Settings {
+            SettingsView().environment(environment)
+        }
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {

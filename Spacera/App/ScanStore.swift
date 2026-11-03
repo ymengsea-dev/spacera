@@ -40,6 +40,10 @@ final class ScanStore {
     private(set) var hasFullDiskAccess: Bool
     /// True when the last scan covered only the home folder, because Full Disk Access was missing.
     private(set) var isLimitedScan = false
+    /// The most recent saved scan summary. Shown at launch, before a new scan has run.
+    private(set) var lastSnapshot: ScanSnapshot?
+    /// What changed since the previous scan. `nil` for the first scan.
+    private(set) var growth: GrowthReport?
     /// Bytes moved to the Trash since the last scan. The disk map is a snapshot and doesn't shrink until the next scan.
     private(set) var trashedSinceScan: Int64 = 0
 
@@ -49,6 +53,11 @@ final class ScanStore {
     init(services: Services) {
         self.services = services
         self.hasFullDiskAccess = services.access.hasFullDiskAccess()
+    }
+
+    /// Loads the last saved scan summary, so the app has something to show right away.
+    func loadLastSnapshot() async {
+        lastSnapshot = await services.snapshots.latest()
     }
 
     func refreshAccess() {
@@ -105,6 +114,12 @@ final class ScanStore {
         self.findings = findings
         isLimitedScan = !hasFullDiskAccess
         trashedSinceScan = 0
+
+        let snapshot = ScanSnapshot.make(result: scanned, attribution: attribution, findings: findings, isLimitedScan: isLimitedScan)
+        let previous = await services.snapshots.latest()
+        growth = previous.map { GrowthReport.compare(previous: $0, current: snapshot) }
+        await services.snapshots.append(snapshot)
+        lastSnapshot = snapshot
         phase = .done
     }
 

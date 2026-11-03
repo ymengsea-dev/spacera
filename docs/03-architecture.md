@@ -46,6 +46,13 @@ SpaceraTests/ Core/, Features/, Fixtures/
 - **`AppFootprint`**: an `AppInfo` plus a `[FootprintEntry]`. Each entry has a URL, a kind (cache, container, support, and so on), a size, a `MatchConfidence`, and a `SafetyLevel`.
 - **`CleanupItem`**: URL, size, the rule ID that found it, the `SafetyLevel`, and the bundle ID of the app that owns it, if any.
 
+## Persistence
+- **`ScanSnapshotStore`** keeps a compact `ScanSnapshot` of each scan (`snapshots.json`, last 30) with per-app sizes, per-rule totals, and volume usage. It doesn't store the file tree, which could be tens of MB on a full disk. It's used for:
+  - the "Last scan" summary at launch,
+  - the "Changes Since Last Scan" card (`GrowthReport`, showing changes of 50 MB or more).
+- **`ActionLog`** keeps the cleanup history (`actions.json`).
+- Both live in `~/Library/Application Support/Spacera`. Settings › Clear History deletes both.
+
 ## Concurrency
 - `DiskScanner.scan(root:)` returns an `AsyncThrowingStream<ScanEvent>`:
   - `.progress(bytes, files, currentPath)` events are throttled to about 10 per second.
