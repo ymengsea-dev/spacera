@@ -1,0 +1,80 @@
+name: Spacera
+options:
+  bundleIdPrefix: com.spacera
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+# Approved external dependency #2 (see docs/09-security.md). Exact pin only.
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
+
+targets:
+  Spacera:
+    type: application
+    platform: macOS
+    sources:
+      - path: Spacera
+    dependencies:
+      - package: Sparkle
+    info:
+      path: Spacera/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Spacera
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: ""
+        # Sparkle — fill in before first release (docs/08-release.md).
+        # The updater stays disabled while these are empty.
+        SUFeedURL: ""
+        SUPublicEDKey: ""
+        SUEnableAutomaticChecks: true
+    entitlements:
+      path: Spacera/Resources/Spacera.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.spacera.Spacera
+        PRODUCT_NAME: Spacera
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        COMBINE_HIDPI_IMAGES: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  SpaceraTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: SpaceraTests
+    dependencies:
+      - target: Spacera
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.spacera.SpaceraTests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Spacera:
+    build:
+      targets:
+        Spacera: all
+        SpaceraTests: [test]
+    test:
+      targets:
+        - SpaceraTests
