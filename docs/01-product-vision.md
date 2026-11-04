@@ -24,7 +24,7 @@ A native, standalone Mac app that does the same job:
 ## MVP scope
 - Per-app storage: bundle size plus Library data, with icons and confidence labels.
 - Leftovers from uninstalled apps.
-- Disk map: an interactive sunburst with drill-down and a synced list.
+- Disk map: an interactive treemap with drill-down and a synced list.
 - Smart categories: developer junk, caches and logs, large files, old downloads, iOS backups, the Trash.
 - Cleanup that moves files to the Trash after a review sheet.
 - Onboarding for Full Disk Access, and a limited mode if it's declined.

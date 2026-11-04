@@ -8,10 +8,11 @@ struct SpaceraApp: App {
         WindowGroup {
             RootView()
                 .environment(environment)
+                .tint(Theme.accent)
                 .frame(minWidth: 960, minHeight: 620)
         }
         Settings {
-            SettingsView().environment(environment)
+            SettingsView().environment(environment).tint(Theme.accent)
         }
         .commands {
             CommandGroup(after: .appInfo) {

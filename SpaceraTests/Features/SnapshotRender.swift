@@ -13,17 +13,25 @@ struct SnapshotRender {
             try tree.file("Folder \(a)/Sub \(b)/Item \(c).bin", bytes: 300_000 * (a + 1) * (c + 1))
         } } }
         let scan = try await DiskScanner().scanTree(root: tree.root)
-        let arcs = SunburstLayout.make(root: scan.root)
-        let sunburst = SunburstView(arcs: arcs, maxDepth: 5, centerTitle: "Example", centerSize: scan.root.size, hovered: arcs.first { $0.depth == 2 },
-                                    iconPath: { _ in nil }, onHover: { _ in }, onSelect: { _ in }, onCenter: {})
-            .frame(width: 520, height: 520).background(Color.white)
-        try save(sunburst, to: dir + "/sunburst.png")
+        let treemap = TreemapView(plan: TreemapPlan(folder: scan.root), hovered: scan.root.children.first, iconPath: { _ in nil },
+                                  onHover: { _, _ in }, onOpen: { _ in }, menu: { _ in EmptyView() })
+            .padding(24).frame(width: 640, height: 460).background(Theme.paper)
+        try save(treemap, to: dir + "/treemap.png")
+        try save(treemap.environment(\.colorScheme, .dark), to: dir + "/treemap-dark.png")
 
         let world = try await World()
         let env = AppEnvironment(services: world.store.services)
         env.store.startScan(); await env.store.waitForScan()
-        let overview = OverviewDashboard(onNavigate: { _ in }).environment(env).padding(24).frame(width: 980).background(Color(nsColor: .windowBackgroundColor))
+        let overview = OverviewDashboard(onNavigate: { _ in }).environment(env).padding(.horizontal, 40).padding(.vertical, 32)
+            .frame(width: 980).background(Theme.paper).tint(Theme.accent)
         try save(overview, to: dir + "/overview.png")
+        try save(overview.environment(\.colorScheme, .dark), to: dir + "/overview-dark.png")
+
+        // The start screen, showing the summary saved by the scan above.
+        let fresh = AppEnvironment(services: world.store.services)
+        await fresh.store.loadLastSnapshot()
+        let start = OverviewView().environment(fresh).frame(width: 980, height: 760).tint(Theme.accent)
+        try save(start, to: dir + "/start.png")
     }
 
     private func save(_ view: some View, to path: String) throws {

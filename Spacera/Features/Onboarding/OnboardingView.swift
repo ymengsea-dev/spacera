@@ -7,17 +7,17 @@ struct OnboardingView: View {
         let model = env.onboarding
         VStack(spacing: 22) {
             Image(systemName: model.hasAccess ? "checkmark.shield.fill" : "lock.shield")
-                .font(.system(size: 56))
-                .foregroundStyle(model.hasAccess ? .green : .accentColor)
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(model.hasAccess ? Theme.sage : Theme.accent)
                 .contentTransition(.symbolEffect(.replace))
 
             VStack(spacing: 8) {
-                Text(model.hasAccess ? "All Set" : "Allow Full Disk Access").font(.title.weight(.semibold))
+                Text(model.hasAccess ? "All set" : "Allow Full Disk Access").font(Theme.display(28)).foregroundStyle(Theme.ink)
                 Text(model.hasAccess
                      ? "Spacera can now see every app's data. Start your first scan."
                      : "Apps keep most of their data in protected folders. To show how much space each app really uses, Spacera needs Full Disk Access.")
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkSecondary)
             }
 
             if !model.hasAccess {
@@ -40,6 +40,8 @@ struct OnboardingView: View {
 
             HStack {
                 if model.hasAccess {
+                    Button("Not Now") { model.dismiss() }
+                        .keyboardShortcut(.cancelAction)
                     Spacer()
                     Button("Start Scan") { model.startScan() }
                         .buttonStyle(.borderedProminent).controlSize(.large)
@@ -55,6 +57,7 @@ struct OnboardingView: View {
         }
         .padding(32)
         .frame(width: 520, height: model.hasAccess ? 340 : 600)
+        .paperBackground()
         .animation(.default, value: model.hasAccess)
     }
 }
@@ -65,8 +68,8 @@ private struct Step: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text("\(number)").font(.callout.weight(.bold)).frame(width: 22, height: 22)
-                .background(Color.accentColor.opacity(0.15), in: Circle())
+            Text("\(number)").font(.callout.weight(.semibold)).foregroundStyle(Theme.accent).frame(width: 22, height: 22)
+                .background(Theme.accent.opacity(0.14), in: Circle())
             Text(text)
             Spacer(minLength: 0)
         }
@@ -78,6 +81,6 @@ private struct Promise: View {
     var text: String
 
     var body: some View {
-        Label { Text(text).foregroundStyle(.secondary) } icon: { Image(systemName: symbol).foregroundStyle(.green) }
+        Label { Text(text).foregroundStyle(Theme.inkSecondary) } icon: { Image(systemName: symbol).foregroundStyle(Theme.sage.readable) }
     }
 }

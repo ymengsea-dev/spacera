@@ -20,7 +20,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .overview: "internaldrive"
         case .apps: "square.grid.2x2"
         case .diskMap: "chart.pie"
-        case .cleanup: "sparkles"
+        case .cleanup: "trash"
         }
     }
 }
@@ -37,7 +37,12 @@ struct RootView: View {
                     .badge(badge(for: item))
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 210)
-            .safeAreaInset(edge: .bottom) { SidebarDiskSummary() }
+            .safeAreaInset(edge: .bottom) {
+                VStack(alignment: .leading, spacing: 0) {
+                    SidebarScanStatus()
+                    SidebarDiskSummary()
+                }
+            }
         } detail: {
             Group {
                 switch selection ?? .overview {
@@ -47,13 +52,14 @@ struct RootView: View {
                 case .cleanup: CleanupView()
                 }
             }
-            .toolbar { ScanToolbar() }
         }
         .sheet(isPresented: $onboarding.isPresented) {
             OnboardingView()
         }
-        .onAppear { env.onboarding.presentIfNeeded() }
-        .task { await env.store.loadLastSnapshot() }
+        .task {
+            await env.store.loadLastSnapshot()
+            env.onboarding.presentIfNeeded()
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             env.onboarding.appDidBecomeActive()
         }
@@ -66,34 +72,38 @@ struct RootView: View {
     }
 }
 
-/// Scan, Stop, and live progress in the toolbar.
-struct ScanToolbar: ToolbarContent {
+/// The scan's state at the bottom of the sidebar, so Rescan and Stop are reachable from every screen.
+private struct SidebarScanStatus: View {
     @Environment(AppEnvironment.self) private var env
 
-    var body: some ToolbarContent {
-        ToolbarItemGroup(placement: .primaryAction) {
-            let phase = env.store.phase
-            if phase.isWorking {
+    var body: some View {
+        let store = env.store
+        VStack(alignment: .leading, spacing: 8) {
+            if store.phase.isWorking {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(phase.title).font(.caption.weight(.medium))
-                        if case .scanning(let progress) = phase {
-                            Text("\(progress.bytes.formattedBytes) · \(progress.files.formatted()) files")
-                                .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
-                        }
-                    }
-                    .frame(minWidth: 170, alignment: .leading)
+                    Text(store.phase.title).font(.caption.weight(.semibold)).lineLimit(1)
                 }
-                Button("Stop", systemImage: "stop.fill") { env.store.cancelScan() }
-                    .help("Stop scanning (⌘.)")
+                if case .scanning(let progress) = store.phase {
+                    Text("\(progress.bytes.formattedBytes) · \(progress.files.formatted()) files")
+                        .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+                        .contentTransition(.numericText())
+                }
+                Button("Stop Scan") { store.cancelScan() }
+                    .controlSize(.small)
             } else {
-                Button(env.store.result == nil ? "Scan" : "Rescan", systemImage: "arrow.clockwise") {
-                    env.store.startScan()
+                if case .failed(let message) = store.phase {
+                    Text(message).font(.caption2).foregroundStyle(Theme.rust.readable).lineLimit(3)
+                } else if let date = store.lastSnapshot?.date {
+                    Text("Scanned \(date.formatted(.relative(presentation: .named)))")
+                        .font(.caption2).foregroundStyle(.secondary)
                 }
-                .help("Scan the disk (⌘R)")
+                Button(store.result == nil ? "Scan Disk" : "Rescan") { store.startScan() }
+                    .controlSize(.small)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
     }
 }
 
@@ -105,12 +115,13 @@ private struct SidebarDiskSummary: View {
         if let volume = env.store.result?.volume, volume.totalCapacity > 0 {
             VStack(alignment: .leading, spacing: 6) {
                 Text(volume.name).font(.caption.weight(.semibold))
-                ProgressView(value: Double(volume.usedCapacity), total: Double(volume.totalCapacity))
-                    .tint(Double(volume.availableCapacity) / Double(volume.totalCapacity) < 0.1 ? .red : .accentColor)
+                let isLow = Double(volume.availableCapacity) / Double(volume.totalCapacity) < 0.1
+                SegmentBar(segments: [.init(id: "used", value: Double(volume.usedCapacity), color: isLow ? Theme.rust : Theme.accent)],
+                           total: Double(volume.totalCapacity), height: 5)
                 Text("\(volume.availableCapacity.formattedBytes) free of \(volume.totalCapacity.formattedBytes)")
                     .font(.caption2).foregroundStyle(.secondary)
             }
-            .padding(12)
+            .padding([.horizontal, .bottom], 12)
         }
     }
 }

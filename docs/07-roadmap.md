@@ -14,7 +14,6 @@
 
 ## After the MVP
 - A menu bar item showing free space, with an alert when the disk is low.
-- A treemap view as an alternative to the sunburst.
 - Scheduled background scans (`SMAppService` login item).
 - Duplicate-file finder.
 - Localization.

@@ -181,23 +181,80 @@ struct AppDetailViewModelTests {
     }
 }
 
-struct SunburstLayoutTests {
-    @Test func anglesAreProportionalAndNested() async throws {
+@MainActor
+struct OnboardingTests {
+    func store(_ world: World, access: Bool) async -> ScanStore {
+        var services = world.store.services
+        services.access = FakeAccess(granted: access)
+        let store = ScanStore(services: services)
+        await store.loadLastSnapshot()
+        return store
+    }
+
+    @Test func promptsWhenAccessWasRevokedAfterAFullScan() async throws {
+        let world = try await World(access: true)
+        let model = OnboardingViewModel(store: await store(world, access: false))
+        model.presentIfNeeded()
+        #expect(model.isPresented)
+    }
+
+    @Test func doesNotNagAfterTheUserChoseALimitedScan() async throws {
+        let world = try await World(access: false)
+        let model = OnboardingViewModel(store: await store(world, access: false))
+        model.presentIfNeeded()
+        #expect(!model.isPresented)
+    }
+
+    @Test func staysHiddenWithAccess() async throws {
+        let world = try await World(access: true)
+        let model = OnboardingViewModel(store: await store(world, access: true))
+        model.presentIfNeeded()
+        #expect(!model.isPresented)
+    }
+}
+
+@MainActor
+struct DiskMapViewModelTests {
+    @Test func listMatchesThePlanAndThePlanIsReused() async throws {
+        let world = try await World()
+        let model = DiskMapViewModel(store: world.store)
+        let plan = try #require(model.plan)
+        #expect(plan.folder === world.store.result?.root)
+        #expect(model.children.map(\.id) == plan.children.map(\.id))
+        #expect(model.plan?.children.map(\.id) == plan.children.map(\.id))
+    }
+}
+
+struct TreemapLayoutTests {
+    @Test func areasAreProportionalAndFillTheBounds() async throws {
         let tree = try TempTree()
         try tree.file("big/a.bin", bytes: 3_000_000)
-        try tree.file("big/b.bin", bytes: 1_000_000)
         try tree.file("small/c.bin", bytes: 1_000_000)
         let root = try await DiskScanner().scanTree(root: tree.root).root
+        let bounds = CGRect(x: 0, y: 0, width: 400, height: 300)
 
-        let arcs = SunburstLayout.make(root: root)
-        let ring1 = arcs.filter { $0.depth == 1 }
-        #expect(ring1.map(\.title) == ["big", "small"])
-        #expect(abs(ring1.reduce(0) { $0 + $1.span } - 2 * .pi) < 0.0001)
+        let tiles = TreemapLayout.make(root: root, in: bounds)
+        #expect(tiles.map(\.title) == ["big", "small"])
+        #expect(tiles.map(\.colorIndex) == [0, 1])
+        let areas = tiles.map { Double($0.rect.width * $0.rect.height) }
+        #expect(abs(areas.reduce(0, +) - 400 * 300) < 1)
+        #expect(abs(areas[0] / areas[1] - Double(tiles[0].size) / Double(tiles[1].size)) < 0.001)
+        #expect(tiles.allSatisfy { bounds.insetBy(dx: -0.01, dy: -0.01).contains($0.rect) })
+    }
 
-        let big = ring1[0]
-        let ring2 = arcs.filter { $0.depth == 2 && $0.start >= big.start - 1e-9 && $0.end <= big.end + 1e-9 }
-        #expect(ring2.map(\.title) == ["a.bin", "b.bin"])
-        #expect(ring2.allSatisfy { $0.colorIndex == big.colorIndex })
+    @Test func tilesDoNotOverlap() async throws {
+        let tree = try TempTree()
+        for i in 1...12 { try tree.file("f\(i).bin", bytes: 1_000_000 * i) }
+        let root = try await DiskScanner().scanTree(root: tree.root).root
+
+        let tiles = TreemapLayout.make(root: root, in: CGRect(x: 0, y: 0, width: 500, height: 320), minShare: 0)
+        #expect(tiles.count == 12)
+        for (i, a) in tiles.enumerated() {
+            for b in tiles[(i + 1)...] {
+                let overlap = a.rect.intersection(b.rect)
+                #expect(overlap.isNull || overlap.width * overlap.height < 0.01)
+            }
+        }
     }
 
     @Test func tinyItemsAreMerged() async throws {
@@ -206,25 +263,61 @@ struct SunburstLayoutTests {
         for i in 0..<5 { try tree.file("tiny\(i).bin", bytes: 300_000) }
         let root = try await DiskScanner().scanTree(root: tree.root).root
 
-        let arcs = SunburstLayout.make(root: root, minAngle: 2 * .pi / 100) // anything under 1% is merged
-        let merged = try #require(arcs.first { $0.node == nil })
+        let tiles = TreemapLayout.make(root: root, in: CGRect(x: 0, y: 0, width: 200, height: 200), minShare: 0.01)
+        let merged = try #require(tiles.first { $0.node == nil })
         #expect(merged.mergedCount == 5)
-        #expect(arcs.filter { $0.depth == 1 }.count == 2)
+        #expect(merged.colorIndex == -1)
+        #expect(tiles.count == 2)
     }
 
-    @Test func hitTestFindsTheRightRing() async throws {
+    @Test func manySimilarItemsKeepTheirOwnBlocks() async throws {
+        // 300 equal folders are each under 0.4% of the parent, but none is small next to the others.
         let tree = try TempTree()
-        try tree.file("only/one.bin", bytes: 1_000_000)
+        for i in 0..<300 { try tree.file("d\(i)/f.bin", bytes: 100_000) }
         let root = try await DiskScanner().scanTree(root: tree.root).root
-        let arcs = SunburstLayout.make(root: root)
-        let center = CGPoint(x: 100, y: 100)
 
-        // Straight up from the centre, in the first ring (radius 20 to 30).
-        let hit = SunburstLayout.hitTest(arcs, point: CGPoint(x: 100, y: 75), center: center, innerRadius: 20, ringWidth: 10)
-        #expect(hit?.title == "only")
-        let second = SunburstLayout.hitTest(arcs, point: CGPoint(x: 100, y: 65), center: center, innerRadius: 20, ringWidth: 10)
-        #expect(second?.title == "one.bin")
-        #expect(SunburstLayout.hitTest(arcs, point: center, center: center, innerRadius: 20, ringWidth: 10) == nil)
+        let plan = TreemapPlan(folder: root, maxTiles: 500)
+        #expect(plan.shownCount == 300)
+        #expect(plan.mergedSize == 0)
+        #expect(TreemapLayout.tiles(for: plan, in: CGRect(x: 0, y: 0, width: 600, height: 400)).allSatisfy { $0.node != nil })
+    }
+
+    @Test func aSingleSmallItemIsNotMergedAlone() async throws {
+        let tree = try TempTree()
+        try tree.file("huge.bin", bytes: 50_000_000)
+        try tree.file("tiny.bin", bytes: 300_000)
+        let root = try await DiskScanner().scanTree(root: tree.root).root
+
+        let plan = TreemapPlan(folder: root, minShare: 0.01)
+        #expect(plan.shownCount == 2)
+        #expect(plan.mergedCount == 0)
+    }
+
+    @Test func planMarksMergedChildrenForTheList() async throws {
+        let tree = try TempTree()
+        try tree.file("huge.bin", bytes: 50_000_000)
+        for i in 0..<5 { try tree.file("tiny\(i).bin", bytes: 300_000) }
+        let root = try await DiskScanner().scanTree(root: tree.root).root
+
+        let plan = TreemapPlan(folder: root, minShare: 0.01)
+        #expect(plan.mergedCount == 5)
+        #expect(plan.children.map(\.name).first == "huge.bin")
+        #expect(!plan.isMerged(plan.children[0]))
+        #expect(plan.children.dropFirst().allSatisfy(plan.isMerged))
+        #expect(plan.mergedSize == plan.children.dropFirst().reduce(0) { $0 + $1.size })
+    }
+
+    @Test func hitTestFindsTheBlockUnderThePoint() async throws {
+        let tree = try TempTree()
+        try tree.file("a.bin", bytes: 1_000_000)
+        try tree.file("b.bin", bytes: 1_000_000)
+        let root = try await DiskScanner().scanTree(root: tree.root).root
+        let tiles = TreemapLayout.make(root: root, in: CGRect(x: 0, y: 0, width: 200, height: 100))
+
+        // Two equal files in a wide box sit side by side.
+        #expect(TreemapLayout.hitTest(tiles, point: CGPoint(x: 50, y: 50))?.rect.minX == 0)
+        #expect(TreemapLayout.hitTest(tiles, point: CGPoint(x: 150, y: 50))?.rect.minX == 100)
+        #expect(TreemapLayout.hitTest(tiles, point: CGPoint(x: 250, y: 50)) == nil)
     }
 }
 
@@ -268,6 +361,21 @@ struct SnapshotTests {
         let reloaded = ScanSnapshotStore(fileURL: url)
         #expect(await reloaded.all().count == ScanSnapshotStore.maxSnapshots)
         #expect(await reloaded.latest()?.date == Date(timeIntervalSince1970: Double(ScanSnapshotStore.maxSnapshots + 4)))
+    }
+
+    @MainActor
+    @Test func savedSnapshotAppsKeepIconsOnlyForInstalledApps() async throws {
+        let world = try await World()
+        let fresh = ScanStore(services: world.store.services)
+        await fresh.loadLastSnapshot()
+        let zeta = try #require(fresh.lastSnapshotApps.first)
+        #expect(zeta.summary.name == "Zeta")
+        #expect(zeta.iconPath == world.app.url.path)
+
+        try FileManager.default.removeItem(at: world.app.url) // a temporary fixture, not user data
+        let later = ScanStore(services: world.store.services)
+        await later.loadLastSnapshot()
+        #expect(later.lastSnapshotApps.first?.iconPath == nil)
     }
 
     @MainActor

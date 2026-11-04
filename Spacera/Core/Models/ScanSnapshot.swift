@@ -45,6 +45,13 @@ struct ScanSnapshot: Codable, Sendable, Identifiable, Equatable {
     }
 }
 
+/// An app from a saved scan summary. `iconPath` is `nil` when the app is no longer installed.
+struct SnapshotApp: Sendable, Identifiable {
+    var summary: ScanSnapshot.AppSummary
+    var iconPath: String?
+    var id: String { summary.key }
+}
+
 /// What changed between two scans.
 struct GrowthReport: Sendable, Equatable {
     struct Change: Sendable, Equatable, Identifiable {

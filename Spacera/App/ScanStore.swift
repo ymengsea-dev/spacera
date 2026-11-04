@@ -42,6 +42,8 @@ final class ScanStore {
     private(set) var isLimitedScan = false
     /// The most recent saved scan summary. Shown at launch, before a new scan has run.
     private(set) var lastSnapshot: ScanSnapshot?
+    /// The apps in `lastSnapshot`, largest first, with icons for the ones still installed.
+    private(set) var lastSnapshotApps: [SnapshotApp] = []
     /// What changed since the previous scan. `nil` for the first scan.
     private(set) var growth: GrowthReport?
     /// Bytes moved to the Trash since the last scan. The disk map is a snapshot and doesn't shrink until the next scan.
@@ -57,7 +59,15 @@ final class ScanStore {
 
     /// Loads the last saved scan summary, so the app has something to show right away.
     func loadLastSnapshot() async {
-        lastSnapshot = await services.snapshots.latest()
+        setLastSnapshot(await services.snapshots.latest())
+    }
+
+    private func setLastSnapshot(_ snapshot: ScanSnapshot?) {
+        lastSnapshot = snapshot
+        // Checked once here rather than on every redraw: an app may have been deleted since the scan.
+        lastSnapshotApps = (snapshot?.apps ?? []).sorted { $0.total > $1.total }.map {
+            SnapshotApp(summary: $0, iconPath: FileManager.default.fileExists(atPath: $0.path) ? $0.path : nil)
+        }
     }
 
     func refreshAccess() {
@@ -119,7 +129,7 @@ final class ScanStore {
         let previous = await services.snapshots.latest()
         growth = previous.map { GrowthReport.compare(previous: $0, current: snapshot) }
         await services.snapshots.append(snapshot)
-        lastSnapshot = snapshot
+        setLastSnapshot(snapshot)
         phase = .done
     }
 

@@ -4,16 +4,13 @@ import Observation
 @MainActor
 @Observable
 final class DiskMapViewModel {
-    let maxDepth = 5
     private let store: ScanStore
     /// Folders drilled into, from the root's child downwards.
     private(set) var trail: [FileNode] = []
     private var trailRootID: ObjectIdentifier?
-    var hovered: SunburstArc?
+    var hovered: FileNode?
     var review: ReviewViewModel?
-
-    @ObservationIgnored private var cachedArcs: [SunburstArc] = []
-    @ObservationIgnored private var cachedFor: ObjectIdentifier?
+    @ObservationIgnored private var cachedPlan: TreemapPlan?
 
     init(store: ScanStore) {
         self.store = store
@@ -25,15 +22,6 @@ final class DiskMapViewModel {
         guard let root else { return nil }
         if trailRootID != root.id { return root } // a new scan replaced the tree
         return trail.last ?? root
-    }
-
-    var arcs: [SunburstArc] {
-        guard let current else { return [] }
-        if cachedFor != current.id {
-            cachedArcs = SunburstLayout.make(root: current, maxDepth: maxDepth)
-            cachedFor = current.id
-        }
-        return cachedArcs
     }
 
     /// Breadcrumb: the root, then each folder drilled into.
@@ -50,8 +38,17 @@ final class DiskMapViewModel {
         return node.name
     }
 
-    /// Children of the current folder, for the list beside the chart.
-    var children: [FileNode] { current?.children.filter { $0.size > 0 } ?? [] }
+    /// The current folder's blocks. Made once per folder, so hovering doesn't sort the children again.
+    var plan: TreemapPlan? {
+        guard let current else { return nil }
+        if let cachedPlan, cachedPlan.folder === current, cachedPlan.folderSize == current.size { return cachedPlan }
+        let plan = TreemapPlan(folder: current)
+        cachedPlan = plan
+        return plan
+    }
+
+    /// Children of the current folder, largest first, for the list beside the chart.
+    var children: [FileNode] { plan?.children ?? [] }
 
     func drill(into node: FileNode) {
         guard node.isDirectory, !node.children.isEmpty, let root else { return }
@@ -70,8 +67,10 @@ final class DiskMapViewModel {
         hovered = nil
     }
 
-    func select(_ arc: SunburstArc) {
-        if let node = arc.node { drill(into: node) }
+    /// Hover from the chart or the list. Leaving a block only clears the hover if it's still the hovered one,
+    /// because moving between blocks can report the new block before the old one.
+    func setHover(_ node: FileNode, _ inside: Bool) {
+        if inside { hovered = node } else if hovered === node { hovered = nil }
     }
 
     func goUp() {

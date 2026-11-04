@@ -12,10 +12,10 @@ extension SafetyLevel {
 
     var color: Color {
         switch self {
-        case .safe: .green
-        case .review: .orange
-        case .userData: .red
-        case .infoOnly: .gray
+        case .safe: Theme.sage
+        case .review: Theme.mustard
+        case .userData: Theme.rust
+        case .infoOnly: Theme.stone
         }
     }
 
@@ -58,13 +58,13 @@ extension MatchConfidence {
     }
 }
 
-/// The card background used across screens.
+/// A raised panel, used sparingly: for content that sits apart from the page, such as banners and expandable groups.
 struct CardBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(16)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(nsColor: .separatorColor).opacity(0.6)))
+            .padding(18)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.rule))
     }
 }
 

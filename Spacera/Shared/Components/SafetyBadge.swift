@@ -7,10 +7,10 @@ struct SafetyBadge: View {
         Label(level.title, systemImage: level.symbol)
             .labelStyle(.titleAndIcon)
             .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 7)
             .padding(.vertical, 2)
-            .foregroundStyle(level.color)
-            .background(level.color.opacity(0.14), in: Capsule())
+            .foregroundStyle(level.color.mix(with: Theme.ink, by: 0.25))
+            .background(level.color.opacity(0.16), in: Capsule())
             .accessibilityLabel("Safety: \(level.title)")
     }
 }
@@ -40,7 +40,7 @@ struct SegmentBar: View {
 
     var body: some View {
         GeometryReader { geo in
-            HStack(spacing: 1) {
+            HStack(spacing: height >= 10 ? 2 : 1) {
                 ForEach(segments) { segment in
                     if segment.value > 0, total > 0 {
                         Rectangle()
@@ -52,7 +52,7 @@ struct SegmentBar: View {
             }
         }
         .frame(height: height)
-        .background(Color(nsColor: .quaternaryLabelColor).opacity(0.4))
+        .background(Theme.rule)
         .clipShape(Capsule())
         .accessibilityHidden(true)
     }

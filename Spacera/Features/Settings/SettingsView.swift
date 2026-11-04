@@ -11,7 +11,7 @@ struct SettingsView: View {
                 LabeledContent("Full Disk Access") {
                     HStack {
                         Text(env.store.hasFullDiskAccess ? "Granted" : "Not granted")
-                            .foregroundStyle(env.store.hasFullDiskAccess ? .green : .orange)
+                            .foregroundStyle((env.store.hasFullDiskAccess ? Theme.sage : Theme.mustard).readable)
                         Button("Open System Settings") { env.onboarding.openSystemSettings() }
                     }
                 }

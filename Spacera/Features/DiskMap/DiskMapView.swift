@@ -6,38 +6,33 @@ struct DiskMapView: View {
     var body: some View {
         @Bindable var model = env.diskMap
         Group {
-            if let current = model.current {
+            if let plan = model.plan {
                 VStack(spacing: 0) {
                     Breadcrumbs(model: model)
-                    Divider()
-                    HSplitView {
-                        SunburstView(
-                            arcs: model.arcs,
-                            maxDepth: model.maxDepth,
-                            centerTitle: model.displayName(current),
-                            centerSize: current.size,
+                    Hairline()
+                    HStack(spacing: 0) {
+                        TreemapView(
+                            plan: plan,
                             hovered: model.hovered,
                             iconPath: { model.iconPath(for: $0) },
-                            onHover: { model.hovered = $0 },
-                            onSelect: { model.select($0) },
-                            onCenter: { model.goUp() }
+                            onHover: { model.setHover($0, $1) },
+                            onOpen: { model.drill(into: $0) },
+                            menu: { NodeMenu(node: $0, model: model) }
                         )
-                        .padding(20)
-                        .frame(minWidth: 380, minHeight: 380)
-                        .contextMenu {
-                            if let node = model.hovered?.node { NodeMenu(node: node, model: model) }
-                        }
+                        .padding(24)
+                        .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
 
-                        ChildList(model: model)
-                            .frame(minWidth: 280, idealWidth: 340, maxWidth: 480)
+                        Rectangle().fill(Theme.rule).frame(width: 1)
+                        ChildList(model: model, plan: plan)
+                            .frame(width: 300)
                     }
                 }
                 .sheet(item: $model.review) { ReviewSheet(model: $0) }
             } else {
-                ContentUnavailableView("No Scan Yet", systemImage: "chart.pie",
-                                       description: Text("Scan your disk to explore it as an interactive map."))
+                NoScanView(message: "Scan your disk to see what fills it, folder by folder.")
             }
         }
+        .paperBackground()
         .navigationTitle("Disk Map")
     }
 }
@@ -46,52 +41,71 @@ private struct Breadcrumbs: View {
     var model: DiskMapViewModel
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 4) {
-                Button { model.goUp() } label: { Image(systemName: "chevron.backward") }
-                    .disabled(model.breadcrumbs.count <= 1)
-                    .keyboardShortcut(.upArrow, modifiers: .command)
-                    .help("Up one level (⌘↑)")
-                ForEach(Array(model.breadcrumbs.enumerated()), id: \.offset) { index, node in
-                    if index > 0 { Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary) }
-                    Button(model.displayName(node)) { model.jump(to: node) }
-                        .buttonStyle(.plain)
-                        .fontWeight(index == model.breadcrumbs.count - 1 ? .semibold : .regular)
+        HStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    Button { model.goUp() } label: { Image(systemName: "chevron.backward") }
+                        .disabled(model.breadcrumbs.count <= 1)
+                        .keyboardShortcut(.upArrow, modifiers: .command)
+                        .help("Up one level (⌘↑)")
+                    ForEach(Array(model.breadcrumbs.enumerated()), id: \.offset) { index, node in
+                        if index > 0 { Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary) }
+                        let isLast = index == model.breadcrumbs.count - 1
+                        Button(model.displayName(node)) { model.jump(to: node) }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(isLast ? Theme.ink : Theme.inkSecondary)
+                            .fontWeight(isLast ? .medium : .regular)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            // Deep trails start scrolled to the end, so the current folder is the crumb in view.
+            .defaultScrollAnchor(.trailing)
+            // Beside the crumbs rather than over them, so it never hides the current folder.
+            if let current = model.current {
+                SizeLabel(bytes: current.size, font: Theme.display(17)).foregroundStyle(Theme.ink)
+                    .fixedSize()
+                    .padding(.horizontal, 16)
+            }
         }
     }
 }
 
 private struct ChildList: View {
     var model: DiskMapViewModel
+    var plan: TreemapPlan
 
     var body: some View {
-        List(model.children) { node in
-            let highlighted = model.hovered?.node === node
+        List(Array(model.children.enumerated()), id: \.element.id) { index, node in
+            // Same colour as the node's block in the chart. Merged children share the "smaller items" block's stone.
+            let color = index < plan.shownCount ? Theme.seriesColor(index) : Theme.stone
+            let highlighted = model.hovered === node
             HStack(spacing: 10) {
                 if model.iconPath(for: node) != nil {
                     AppIconView(path: model.iconPath(for: node), size: 22)
                 } else {
-                    Image(systemName: symbol(for: node)).frame(width: 22).foregroundStyle(.secondary)
+                    Image(systemName: symbol(for: node)).frame(width: 22).foregroundStyle(Theme.inkSecondary)
                 }
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(node.name).lineLimit(1).truncationMode(.middle)
-                    SegmentBar(segments: [.init(id: "v", value: model.fraction(of: node), color: .accentColor)], total: 1, height: 4)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(node.name).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
+                    SegmentBar(segments: [.init(id: "v", value: model.fraction(of: node), color: color)], total: 1, height: 4)
                 }
-                SizeLabel(bytes: node.size, font: .callout).frame(minWidth: 64, alignment: .trailing)
+                SizeLabel(bytes: node.size, font: .callout).foregroundStyle(Theme.inkSecondary)
+                    .frame(minWidth: 64, alignment: .trailing)
             }
-            .padding(.vertical, 2)
-            .listRowBackground(highlighted ? Color.accentColor.opacity(0.15) : nil)
+            .padding(.vertical, 3)
+            .listRowBackground(highlighted ? color.opacity(0.16) : Color.clear)
             .contentShape(Rectangle())
+            .onHover { model.setHover(node, $0) }
             .onTapGesture(count: 2) { model.drill(into: node) }
             .contextMenu { NodeMenu(node: node, model: model) }
             .accessibilityElement(children: .combine)
             .accessibilityHint(node.isDirectory ? "Double-click to open" : "")
         }
         .listStyle(.inset)
+        .scrollContentBackground(.hidden)
+        .background(Theme.surface)
     }
 
     private func symbol(for node: FileNode) -> String {

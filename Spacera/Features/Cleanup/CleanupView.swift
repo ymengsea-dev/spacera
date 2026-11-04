@@ -10,11 +10,11 @@ struct CleanupView: View {
             if model.hasResult {
                 VStack(spacing: 0) {
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 22) {
+                        LazyVStack(alignment: .leading, spacing: 32) {
                             if model.isLimitedScan { LimitedScanBanner() }
                             ForEach(model.sections, id: \.category) { section in
-                                VStack(alignment: .leading, spacing: 10) {
-                                    Text(section.category.title).font(.title3.weight(.semibold))
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text(section.category.title).sectionHeading()
                                     ForEach(section.findings) { finding in
                                         CategoryCard(finding: finding, model: model)
                                     }
@@ -24,28 +24,32 @@ struct CleanupView: View {
                                 ContentUnavailableView("All Clean", systemImage: "checkmark.seal", description: Text("Nothing to clean up was found."))
                             }
                         }
-                        .padding(24)
+                        .padding(.horizontal, 40).padding(.vertical, 32)
+                        .frame(maxWidth: 1040, alignment: .leading)
+                        .frame(maxWidth: .infinity)
                     }
-                    Divider()
-                    HStack {
+                    Hairline()
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Button("History…") { showsHistory = true }
                         Spacer()
-                        Text("Selected: \(model.selectedSize.formattedBytes)")
-                            .font(.headline).monospacedDigit()
+                        Text("Selected").foregroundStyle(Theme.inkSecondary)
+                        Text(model.selectedSize.formattedBytes)
+                            .font(Theme.display(20)).foregroundStyle(Theme.ink).monospacedDigit()
                         Button("Review…") { model.startReview() }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
                             .disabled(model.selectedItems.isEmpty)
                     }
-                    .padding(14)
+                    .padding(.horizontal, 20).padding(.vertical, 12)
+                    .background(Theme.surface)
                 }
                 .onAppear { model.syncSelection() }
                 .onChange(of: env.store.result?.date) { model.syncSelection() }
             } else {
-                ContentUnavailableView("No Scan Yet", systemImage: "sparkles",
-                                       description: Text("Scan your disk to find caches, developer junk, and leftovers you can safely remove."))
+                NoScanView(message: "Scan your disk to find caches, developer junk, and leftovers you can safely remove.")
             }
         }
+        .paperBackground()
         .navigationTitle("Cleanup")
         .sheet(item: $model.review) { ReviewSheet(model: $0) }
         .sheet(isPresented: $showsHistory) { HistorySheet(model: model) }

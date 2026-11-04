@@ -6,7 +6,7 @@ struct AppDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider()
+            Hairline()
             if model.entries.isEmpty {
                 ContentUnavailableView("Nothing Left", systemImage: "checkmark.circle", description: Text("Everything here has been moved to the Trash."))
             } else {
@@ -27,10 +27,12 @@ struct AppDetailView: View {
                     }
                 }
                 .listStyle(.inset)
+                .scrollContentBackground(.hidden)
             }
-            Divider()
+            Hairline()
             footer
         }
+        .paperBackground()
         .navigationTitle(model.title)
         .sheet(item: $model.review) { review in ReviewSheet(model: review) }
     }
@@ -39,16 +41,16 @@ struct AppDetailView: View {
         HStack(spacing: 16) {
             AppIconView(path: model.iconPath, symbol: "trash.slash", size: 64)
             VStack(alignment: .leading, spacing: 4) {
-                Text(model.title).font(.title.weight(.semibold))
-                Text(model.subtitle).foregroundStyle(.secondary).textSelection(.enabled)
+                Text(model.title).font(Theme.pageTitle).foregroundStyle(Theme.ink)
+                Text(model.subtitle).foregroundStyle(Theme.inkSecondary).textSelection(.enabled)
             }
             Spacer()
-            VStack(alignment: .trailing) {
-                SizeLabel(bytes: model.total, font: .system(size: 28, weight: .semibold, design: .rounded))
-                Text("in \(model.entries.count) places").font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                SizeLabel(bytes: model.total, font: Theme.display(34, weight: .light)).foregroundStyle(Theme.ink)
+                Text("in \(model.entries.count) places").font(.caption).foregroundStyle(Theme.inkSecondary)
             }
         }
-        .padding(20)
+        .padding(.horizontal, 28).padding(.vertical, 22)
     }
 
     private var footer: some View {
@@ -58,12 +60,12 @@ struct AppDetailView: View {
                     .help("Select the app and all of its data")
             }
             Spacer()
-            Text("Selected: \(model.selectedSize.formattedBytes)").monospacedDigit().foregroundStyle(.secondary)
+            Text("Selected: \(model.selectedSize.formattedBytes)").monospacedDigit().foregroundStyle(Theme.inkSecondary)
             Button("Move to Trash…") { model.startReview() }
                 .buttonStyle(.borderedProminent)
                 .disabled(model.selected.isEmpty)
         }
-        .padding(14)
+        .padding(.horizontal, 20).padding(.vertical, 14)
     }
 }
 
@@ -80,15 +82,15 @@ private struct EntryRow: View {
                 .labelsHidden()
                 .disabled(!selectable)
             VStack(alignment: .leading, spacing: 2) {
-                Text(URL(fileURLWithPath: entry.path).lastPathComponent).lineLimit(1)
-                Text(entry.path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Text(URL(fileURLWithPath: entry.path).lastPathComponent).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(entry.path).font(.caption).foregroundStyle(Theme.inkSecondary).lineLimit(1).truncationMode(.middle)
                 if let note = entry.note {
-                    Text(note).font(.caption).foregroundStyle(entry.kind == .backgroundItem ? .orange : .secondary).lineLimit(2)
+                    Text(note).font(.caption).foregroundStyle(entry.kind == .backgroundItem ? Theme.mustard.readable : Theme.inkSecondary).lineLimit(2)
                 }
             }
             Spacer()
             if entry.confidence == .likely {
-                Image(systemName: "questionmark.circle").foregroundStyle(.secondary).help(entry.confidence.title)
+                Image(systemName: "questionmark.circle").foregroundStyle(Theme.inkSecondary).help(entry.confidence.title)
             }
             SafetyBadge(level: entry.safety)
             SizeLabel(bytes: entry.size, font: .callout).frame(minWidth: 70, alignment: .trailing)

@@ -42,11 +42,11 @@ final class OverviewViewModel {
 
         let system = max(0, volume.usedCapacity - apps - appData - yourFiles)
         return [
-            Slice(id: "apps", title: "Apps", bytes: apps, color: .blue),
-            Slice(id: "appData", title: "App Data", bytes: appData, color: .purple),
-            Slice(id: "files", title: "Your Files", bytes: yourFiles, color: .orange),
-            Slice(id: "system", title: "System & Other", bytes: system, color: .gray),
-            Slice(id: "free", title: "Free", bytes: volume.availableCapacity, color: Color(nsColor: .quaternaryLabelColor)),
+            Slice(id: "apps", title: "Apps", bytes: apps, color: Theme.slate),
+            Slice(id: "appData", title: "App Data", bytes: appData, color: Theme.mauve),
+            Slice(id: "files", title: "Your Files", bytes: yourFiles, color: Theme.mustard),
+            Slice(id: "system", title: "System & Other", bytes: system, color: Theme.stone),
+            Slice(id: "free", title: "Free", bytes: volume.availableCapacity, color: Theme.rule),
         ]
     }
 
@@ -69,12 +69,20 @@ final class OverviewViewModel {
     }
 
     var growth: GrowthReport? { store.growth }
-    var lastSnapshot: ScanSnapshot? { store.lastSnapshot }
 
     var hasGrowthToShow: Bool {
         guard let growth else { return false }
         return !growth.apps.isEmpty || !growth.categories.isEmpty || abs(growth.usedDelta) >= GrowthReport.threshold
     }
+
+    /// The biggest changes since the previous scan, apps and cleanup categories together.
+    var topChanges: [(change: GrowthReport.Change, isApp: Bool)] {
+        guard let growth else { return [] }
+        let all = growth.apps.map { ($0, true) } + growth.categories.map { ($0, false) }
+        return Array(all.sorted { abs($0.0.delta) > abs($1.0.delta) }.prefix(5)).map { (change: $0.0, isApp: $0.1) }
+    }
+    var lastSnapshot: ScanSnapshot? { store.lastSnapshot }
+    var lastSnapshotApps: [SnapshotApp] { store.lastSnapshotApps }
 
     func startScan() { store.startScan() }
 }

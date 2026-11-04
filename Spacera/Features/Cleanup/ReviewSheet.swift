@@ -19,7 +19,7 @@ struct ReviewSheet: View {
     private var reviewContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Review Before Moving to Trash").font(.title2.weight(.semibold))
+                Text("Review before moving to the Trash").font(Theme.display(24)).foregroundStyle(Theme.ink)
                 Text("\(model.plan.entries.count) items · \(model.plan.totalSize.formattedBytes). Everything goes to the Trash, so you can put it back until you empty the Trash.")
                     .foregroundStyle(.secondary)
             }
@@ -30,7 +30,7 @@ struct ReviewSheet: View {
                     Section {
                         ForEach(model.plan.runningOwners.sorted(), id: \.self) { id in
                             HStack {
-                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.mustard)
                                 Text("\(model.appName(for: id)) is open. Quit it first so it doesn't recreate or depend on these files.")
                                 Spacer()
                                 Button("Quit \(model.appName(for: id))") { Task { await model.quit(bundleID: id) } }
@@ -95,7 +95,7 @@ private struct EntryRow: View {
                 Text(entry.item.path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 ForEach(Array(entry.warnings.enumerated()), id: \.offset) { _, warning in
                     Label(text(for: warning), systemImage: "exclamationmark.triangle")
-                        .font(.caption).foregroundStyle(.orange)
+                        .font(.caption).foregroundStyle(Theme.mustard.readable)
                 }
             }
             Spacer()
@@ -120,8 +120,8 @@ private struct DoneView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 52)).foregroundStyle(.green)
-            Text("Moved \(batch.trashedSize.formattedBytes) to the Trash").font(.title2.weight(.semibold))
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 52)).foregroundStyle(Theme.sage)
+            Text("Moved \(batch.trashedSize.formattedBytes) to the Trash").font(Theme.display(26)).foregroundStyle(Theme.ink)
             Text("Empty the Trash to free the space. Changed your mind? Use Put Back in Cleanup › History.")
                 .multilineTextAlignment(.center).foregroundStyle(.secondary)
             if !failures.isEmpty {

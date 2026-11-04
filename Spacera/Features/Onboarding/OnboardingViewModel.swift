@@ -17,9 +17,14 @@ final class OnboardingViewModel {
 
     var hasAccess: Bool { store.hasFullDiskAccess }
 
+    /// Shown at launch when Full Disk Access is missing. Skipped when the last scan was already a limited one,
+    /// because the user chose that; the Overview still offers access. If access was revoked after a
+    /// full scan, the next scan would quietly shrink to the home folder, so the prompt comes back.
     func presentIfNeeded() {
         store.refreshAccess()
-        if !store.hasFullDiskAccess, !dismissedThisSession { isPresented = true }
+        guard !store.hasFullDiskAccess, !dismissedThisSession else { return }
+        if store.lastSnapshot?.isLimitedScan == true { return }
+        isPresented = true
     }
 
     func openSystemSettings() {
@@ -42,7 +47,9 @@ final class OnboardingViewModel {
         store.startScan()
     }
 
-    func continueLimited() {
+    func continueLimited() { dismiss() }
+
+    func dismiss() {
         isPresented = false
         dismissedThisSession = true
     }

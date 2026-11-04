@@ -6,7 +6,7 @@ Full design docs are in [`docs/`](docs/README.md). Read them before making archi
 
 ## Tech stack
 - **Swift 6.4** in Swift 6 language mode (strict concurrency). **SwiftUI** with AppKit bridges. Deployment target **macOS 15**.
-- Visualization: SwiftUI `Canvas` (sunburst) and Swift Charts.
+- Visualization: a squarified treemap built from SwiftUI views, and Swift Charts.
 - File system: Darwin `getattrlistbulk`, `URLResourceValues`, `FileManager.trashItem`.
 - App metadata: `Bundle` and Security.framework (`SecStaticCodeCopySigningInformation`).
 - Persistence: Codable JSON files in `~/Library/Application Support/Spacera`.
