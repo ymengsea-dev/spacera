@@ -8,7 +8,6 @@ struct DiskMapView: View {
         Group {
             if let plan = model.plan {
                 VStack(spacing: 0) {
-                    Breadcrumbs(model: model)
                     Hairline()
                     HStack(spacing: 0) {
                         TreemapView(
@@ -34,6 +33,20 @@ struct DiskMapView: View {
         }
         .paperBackground()
         .navigationTitle("Disk Map")
+        .toolbar {
+            if model.plan != nil {
+                ToolbarItem(placement: .navigation) {
+                    Breadcrumbs(model: model)
+                }
+                if let current = model.current {
+                    ToolbarItem(placement: .primaryAction) {
+                        SizeLabel(bytes: current.size, font: Theme.display(17)).foregroundStyle(Theme.ink)
+                            .fixedSize()
+                            .padding(.horizontal, 8)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -41,13 +54,13 @@ private struct Breadcrumbs: View {
     var model: DiskMapViewModel
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
+            Button { model.goUp() } label: { Image(systemName: "chevron.backward") }
+                .disabled(model.breadcrumbs.count <= 1)
+                .keyboardShortcut(.upArrow, modifiers: .command)
+                .help("Up one level (⌘↑)")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 4) {
-                    Button { model.goUp() } label: { Image(systemName: "chevron.backward") }
-                        .disabled(model.breadcrumbs.count <= 1)
-                        .keyboardShortcut(.upArrow, modifiers: .command)
-                        .help("Up one level (⌘↑)")
                     ForEach(Array(model.breadcrumbs.enumerated()), id: \.offset) { index, node in
                         if index > 0 { Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary) }
                         let isLast = index == model.breadcrumbs.count - 1
@@ -57,18 +70,14 @@ private struct Breadcrumbs: View {
                             .fontWeight(isLast ? .medium : .regular)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
             }
             // Deep trails start scrolled to the end, so the current folder is the crumb in view.
+            // Short trails stay on the left, next to the back button.
             .defaultScrollAnchor(.trailing)
-            // Beside the crumbs rather than over them, so it never hides the current folder.
-            if let current = model.current {
-                SizeLabel(bytes: current.size, font: Theme.display(17)).foregroundStyle(Theme.ink)
-                    .fixedSize()
-                    .padding(.horizontal, 16)
-            }
+            .defaultScrollAnchor(.leading, for: .alignment)
+            .frame(maxWidth: 460)
         }
+        .padding(.horizontal, 8)
     }
 }
 

@@ -211,6 +211,17 @@ struct OnboardingTests {
         model.presentIfNeeded()
         #expect(!model.isPresented)
     }
+
+    @Test func reopeningWithAccessDoesNotStartAScan() async throws {
+        let world = try await World(access: true)
+        let scanStore = await store(world, access: true)
+        let model = OnboardingViewModel(store: scanStore)
+        model.presentIfNeeded()
+        model.appDidBecomeActive()
+        await scanStore.waitForScan()
+        #expect(scanStore.phase == .idle)
+        #expect(scanStore.result == nil)
+    }
 }
 
 @MainActor

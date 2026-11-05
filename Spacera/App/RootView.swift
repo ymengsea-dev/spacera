@@ -52,6 +52,8 @@ struct RootView: View {
                 case .cleanup: CleanupView()
                 }
             }
+            .toolbar(removing: .title)
+            .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         }
         .sheet(isPresented: $onboarding.isPresented) {
             OnboardingView()

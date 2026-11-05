@@ -15,12 +15,6 @@ struct SpaceraApp: App {
             SettingsView().environment(environment).tint(Theme.accent)
         }
         .commands {
-            CommandGroup(after: .appInfo) {
-                Button("Check for Updates…") {
-                    environment.updater.checkForUpdates()
-                }
-                .disabled(!environment.updater.isConfigured)
-            }
             CommandMenu("Scan") {
                 Button(environment.store.result == nil ? "Scan Disk" : "Rescan") {
                     environment.store.startScan()

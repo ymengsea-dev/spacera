@@ -6,7 +6,6 @@ import Observation
 @MainActor
 @Observable
 final class AppEnvironment {
-    let updater: UpdaterService
     let services: Services
     let store: ScanStore
 
@@ -16,9 +15,8 @@ final class AppEnvironment {
     let cleanup: CleanupViewModel
     let onboarding: OnboardingViewModel
 
-    init(services: Services = .live(), updater: UpdaterService = UpdaterService()) {
+    init(services: Services = .live()) {
         self.services = services
-        self.updater = updater
         let store = ScanStore(services: services)
         self.store = store
         self.overview = OverviewViewModel(store: store)

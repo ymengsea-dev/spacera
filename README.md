@@ -21,8 +21,8 @@
 - **Persistence:** Codable JSON in `~/Library/Application Support/Spacera`
 - **Testing:** Swift Testing with temporary directory fixtures
 - **Build system:** XcodeGen (configuration-driven project generation)
-- **Updates:** Sparkle 2 (pinned exact version)
-- **Distribution:** Developer ID signed, notarized `.dmg` (not sandboxed)
+- **Updates:** manual download from GitHub Releases (no auto-update for now)
+- **Distribution:** self-signed `.dmg` on GitHub Releases, not notarized (not sandboxed)
 
 ## Getting Started
 
@@ -53,7 +53,7 @@ xcodebuild test -project Spacera.xcodeproj -scheme Spacera
 
 
 ```sh
-scripts/release.sh  # Archive → sign → notarize → dmg → appcast
+scripts/release.sh  # Not written yet: archive → sign → dmg (docs/08-release.md)
 ```
 
 ## Project Layout
@@ -65,7 +65,7 @@ Spacera/
 ├── Features/         MVVM by feature (Views + ViewModels + Components)
 ├── Core/
 │   ├── Models/       Value types (FileNode, AppInfo, AppFootprint, etc.)
-│   └── Services/     Business logic (Scanning, Apps, Cleanup, Permissions, Updates)
+│   └── Services/     Business logic (Scanning, Apps, Cleanup, Permissions)
 └── Shared/           Reusable views and extensions
 
 SpaceraTests/         Mirrors app structure; Fixtures/ for temporary test trees
@@ -91,7 +91,7 @@ Spacera follows **MVVM grouped by feature:**
 
 ## Dependencies
 
-Only **XcodeGen** (build tool, never shipped) and **Sparkle** (update framework) are approved external dependencies. No third-party Swift Package Manager imports in the app. Ask before adding new dependencies.
+**XcodeGen** (build tool, never shipped) is the only approved external dependency, and the app makes no network connections. No third-party Swift Package Manager imports in the app. Ask before adding new dependencies.
 
 ## Contributing
 

@@ -15,20 +15,12 @@ settings:
     DEAD_CODE_STRIPPING: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 
-# Approved external dependency #2 (see docs/09-security.md). Exact pin only.
-packages:
-  Sparkle:
-    url: https://github.com/sparkle-project/Sparkle
-    exactVersion: 2.10.1
-
 targets:
   Spacera:
     type: application
     platform: macOS
     sources:
       - path: Spacera
-    dependencies:
-      - package: Sparkle
     info:
       path: Spacera/Resources/Info.plist
       properties:
@@ -38,11 +30,6 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         NSHumanReadableCopyright: ""
-        # Sparkle — fill in before first release (docs/08-release.md).
-        # The updater stays disabled while these are empty.
-        SUFeedURL: ""
-        SUPublicEDKey: ""
-        SUEnableAutomaticChecks: true
     entitlements:
       path: Spacera/Resources/Spacera.entitlements
       properties:
@@ -57,6 +44,10 @@ targets:
         COMBINE_HIDPI_IMAGES: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      configs:
+        Release:
+          # Keeps get-task-allow out of Release builds (docs/09-security.md).
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
 
   SpaceraTests:
     type: bundle.unit-test

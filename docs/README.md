@@ -9,5 +9,5 @@
 | 05 | [Cleanup and safety](05-cleanup-safety.md) | Safety levels, blocked paths, confirmations, and the action log |
 | 06 | [UI spec](06-ui-spec.md) | The screens, how the disk map works, and accessibility |
 | 07 | [Roadmap](07-roadmap.md) | Build order, milestones, and the backlog |
-| 08 | [Release](08-release.md) | Signing, notarization, the `.dmg`, and Sparkle updates |
+| 08 | [Release](08-release.md) | Signing, the `.dmg`, GitHub Releases, and manual updates |
 | 09 | [Security](09-security.md) | Dependency policy, network access, entitlements, and how deletions are guarded |

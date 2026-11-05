@@ -79,7 +79,6 @@ private struct EmptyScanView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .keyboardShortcut(.defaultAction)
                 if case .failed(let message) = env.store.phase {
                     Text(message).foregroundStyle(Theme.rust.readable).font(.callout)
                 }

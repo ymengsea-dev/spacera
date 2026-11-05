@@ -14,6 +14,7 @@ Shown at each launch without Full Disk Access, unless the last scan was already 
 1. A welcome screen: "See what's using your Mac's storage."
 2. An explanation of why Full Disk Access is needed and what Spacera never does (no uploads, no permanent deletes), with an **Open System Settings** button.
 3. Spacera checks for access automatically when the app comes back to the foreground. Once access is granted: "All set → Start scan."
+   - **A scan only starts when the user asks for one**, with a click or ⌘R. Opening the app, or reopening it after granting access, never starts a scan, and the Return key doesn't either.
 4. **Continue with limited scan** skips this; the app then shows a persistent banner.
 
 ## Overview
@@ -38,7 +39,7 @@ Shown at each launch without Full Disk Access, unless the last scan was already 
   - Each block has its own colour from the series, softened toward the paper so the name and size (in the serif) read on it. Labels appear only on blocks big enough to hold them; app bundles also show their icon.
   - **Hover:** the block lifts and the others fade back; a tooltip gives the name and size.
   - **Click:** opens that folder. **Right-click:** Open · Reveal in Finder · Copy Path · Move to Trash….
-- A **breadcrumb** trail sits above the chart, with the current folder's total beside it on the right (never over the crumbs). Deep trails open scrolled to the end, so the current folder is visible. The back button goes up one level.
+- A **breadcrumb** trail sits in the window's toolbar, starting on the left, with the current folder's total beside it (never over the crumbs). Deep trails open scrolled to the end, so the current folder is visible. The back button goes up one level and stays visible while the trail scrolls.
 - A fixed-width **list** on the right shows the same children, largest first, in the same colours, and stays in sync with the chart's hover.
 
 ## Cleanup

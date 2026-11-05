@@ -4,15 +4,16 @@
 | Step | Milestone | Done when |
 |---|---|---|
 | 0 | Repo, docs, and CLAUDE.md | First commit |
-| 1 | Project skeleton: XcodeGen `project.yml`, app + test targets, Sparkle pinned, folder structure | `xcodegen generate`, `xcodebuild build`, and `xcodebuild test` all pass |
+| 1 | Project skeleton: XcodeGen `project.yml`, app + test targets, folder structure | `xcodegen generate`, `xcodebuild build`, and `xcodebuild test` all pass |
 | 2 | `Core/Models` + Scanning service (`DiskScanner`, `VolumeInfo`) | Tests on fixture trees pass: sizes, hard links, cancellation |
 | 3 | Apps service (`AppCatalog`, `AppFootprintResolver`, overrides) | Fixture tests pass; results check out against the real `/Applications` |
 | 4 | Cleanup service (rules, `SafetyGuard`, `Trasher`, `ActionLog`) | Tests confirm blocked paths are rejected and items end up in the Trash |
 | 5 | Features: Overview → Apps + Detail → Disk Map → Cleanup + Review → Onboarding | Each ViewModel is tested with fake services; manual run looks right |
 | 6 | Snapshot persistence and growth view | The second launch shows the previous results instantly |
-| 7 | Sparkle updater and `scripts/release.sh` | A notarized `.dmg` and a signed appcast are produced |
+| 7 | `scripts/release.sh` | A self-signed `.dmg` is produced, and replacing the app with a newer build keeps Full Disk Access |
 
 ## After the MVP
+- Developer ID signing and notarization, with auto-update through Sparkle (see [08-release](08-release.md)).
 - A menu bar item showing free space, with an alert when the disk is low.
 - Scheduled background scans (`SMAppService` login item).
 - Duplicate-file finder.

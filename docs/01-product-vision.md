@@ -29,9 +29,9 @@ A native, standalone Mac app that does the same job:
 - Cleanup that moves files to the Trash after a review sheet.
 - Onboarding for Full Disk Access, and a limited mode if it's declined.
 - Scan snapshots, to show growth since the last scan.
-- Auto-update through Sparkle.
 
 ## Non-goals (for now)
+- Auto-update, until the app moves to Developer ID signing (see [08-release](08-release.md)).
 - Mac App Store distribution, because the sandbox would block the core feature.
 - Deleting files permanently (bypassing the Trash).
 - Cloud features, accounts, or telemetry.

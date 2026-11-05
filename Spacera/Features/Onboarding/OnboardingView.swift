@@ -45,7 +45,6 @@ struct OnboardingView: View {
                     Spacer()
                     Button("Start Scan") { model.startScan() }
                         .buttonStyle(.borderedProminent).controlSize(.large)
-                        .keyboardShortcut(.defaultAction)
                 } else {
                     Button("Continue with Limited Scan") { model.continueLimited() }
                     Spacer()

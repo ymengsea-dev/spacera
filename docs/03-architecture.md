@@ -19,7 +19,7 @@ Spacera/
   Features/   Overview/, Apps/, DiskMap/, Cleanup/, Onboarding/     (each: View + ViewModel + Components/)
   Core/
     Models/   FileNode, AppInfo, AppFootprint, CleanupItem, SafetyLevel, VolumeInfo
-    Services/ Scanning/, Apps/, Cleanup/, Permissions/, Updates/
+    Services/ Scanning/, Apps/, Cleanup/, Permissions/
   Shared/     Components/, Extensions/
   Resources/  Assets, Info.plist, entitlements
 SpaceraTests/ Core/, Features/, Fixtures/

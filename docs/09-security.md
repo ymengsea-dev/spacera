@@ -3,27 +3,28 @@
 Spacera gets Full Disk Access and can move files to the Trash, so users have to be able to trust it. This document sets the rules.
 
 ## Dependency policy
-Everything comes from Apple frameworks (SwiftUI, AppKit, Foundation, Darwin, Security, and Charts) except for **exactly two approved external dependencies**:
+Everything comes from Apple frameworks (SwiftUI, AppKit, Foundation, Darwin, Security, and Charts) except for **exactly one approved external dependency**, which doesn't ship in the app:
 
 | Dependency | Licence | Ships in the app? | Purpose | Safeguards |
 |---|---|---|---|---|
 | [XcodeGen](https://github.com/yonaskolb/XcodeGen) | MIT | **No**, it only runs on the developer's Mac | Generates `Spacera.xcodeproj` from `project.yml` | Installed with Homebrew; it produces only a project file, never app code |
-| [Sparkle 2](https://github.com/sparkle-project/Sparkle) | MIT | Yes, as an embedded framework | Auto-update | Pinned to an **exact version** in `project.yml`, with `Package.resolved` committed; release notes reviewed before each upgrade |
 
 **Adding any other dependency** (library, package, or build tool) requires explicit approval from the project owner and an update to this document.
 
 ## Network
-- The **only** network traffic is Sparkle fetching `SUFeedURL` and downloading updates, over HTTPS only.
-- There is no analytics, telemetry, crash uploading, or account system. Scan data never leaves the Mac.
+- The app makes **no network connections** and contains no networking code.
+- There is no analytics, telemetry, crash uploading, account system, or update check. Scan data never leaves the Mac.
 
-## Update integrity
-- Every update archive is signed with **EdDSA (ed25519)**. Sparkle rejects any update whose signature doesn't match `SUPublicEDKey`.
-- Updates must also carry a valid Developer ID signature and notarization, which Gatekeeper checks.
-- The private EdDSA key lives only in the maintainer's Keychain. `.gitignore` excludes key files.
+## Release integrity
+- Releases are signed with a self-signed certificate and are **not notarized** (see [08-release](08-release.md)), so Apple doesn't vouch for them. The signature only shows that a build came from whoever holds the certificate.
+- Each release publishes the DMG's SHA-256 checksum.
+- The private signing key lives only in the maintainer's Keychain and a secure backup. `.gitignore` excludes key files. A self-signed certificate can't be revoked, so if the key leaks, the only fix is a new certificate.
 
 ## Code signing and entitlements
-- **Hardened Runtime** is on.
-- **No** `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation`, or `get-task-allow` in Release builds.
+- **Hardened Runtime** is on in Release builds.
+- **Library validation stays on.** **No** `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation`, or `get-task-allow` in Release builds. This is why the app embeds no frameworks: with no Team ID, Hardened Runtime would refuse to load them (see [08-release](08-release.md)).
+- Releases must use the **same signing certificate** every time. macOS ties the Full Disk Access grant to the signature, so ad-hoc signing or a new certificate makes users grant it again.
+- Only sign with a certificate that belongs to the project owner, and never ship a build signed with an Apple Development certificate.
 - **Not sandboxed**, because the core feature needs it. Full Disk Access is granted by the user in System Settings; the app can't grant it to itself.
 
 ## How deletions are guarded

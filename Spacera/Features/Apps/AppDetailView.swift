@@ -34,6 +34,8 @@ struct AppDetailView: View {
         }
         .paperBackground()
         .navigationTitle(model.title)
+        .toolbar(removing: .title)
+        .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .sheet(item: $model.review) { review in ReviewSheet(model: review) }
     }
 
@@ -47,7 +49,7 @@ struct AppDetailView: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 SizeLabel(bytes: model.total, font: Theme.display(34, weight: .light)).foregroundStyle(Theme.ink)
-                Text("in \(model.entries.count) places").font(.caption).foregroundStyle(Theme.inkSecondary)
+                Text(model.entries.count == 1 ? "in 1 place" : "in \(model.entries.count) places").font(.caption).foregroundStyle(Theme.inkSecondary)
             }
         }
         .padding(.horizontal, 28).padding(.vertical, 22)
