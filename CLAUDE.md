@@ -19,7 +19,7 @@ Full design docs are in [`docs/`](docs/README.md). Read them before making archi
 xcodegen generate                                            # after editing project.yml or on a fresh clone
 xcodebuild -project Spacera.xcodeproj -scheme Spacera build
 xcodebuild test -project Spacera.xcodeproj -scheme Spacera
-scripts/release.sh                                           # not written yet: archive → sign → dmg
+scripts/release.sh [patch|minor|major]                       # release DMG → build/<version>/ (docs/08-release.md)
 ```
 
 ## Layout: MVVM grouped by feature

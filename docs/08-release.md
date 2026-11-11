@@ -5,7 +5,7 @@ Spacera is distributed **outside the Mac App Store** as a `.dmg` on GitHub Relea
 Sparkle was removed on purpose. A self-signed app has no Team ID, so Hardened Runtime's library validation refuses to load an embedded framework like Sparkle. Keeping it would have meant turning library validation off, which isn't worth it for an app that holds Full Disk Access.
 
 ## Status
-Not set up yet. The signing certificate and `scripts/release.sh` don't exist yet. Local Release builds are ad-hoc signed.
+`scripts/release.sh` is written. The signing certificate doesn't exist yet, so the script stops until it is created. `SIGN_IDENTITY=- scripts/release.sh` makes an ad-hoc test build.
 
 ## Signing identity
 | Option | Full Disk Access after an update | Gatekeeper on first open | Use |
@@ -23,14 +23,21 @@ In Keychain Access, use **Certificate Assistant → Create a Certificate** to cr
 
 **Export it with its private key and back it up.** A new certificate changes the designated requirement, so every user would have to grant Full Disk Access again.
 
-## Each release (`scripts/release.sh`, to be written)
-1. Bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml`.
-2. `xcodegen generate`
-3. `xcodebuild archive -scheme Spacera -configuration Release -archivePath build/Spacera.xcarchive CODE_SIGN_IDENTITY="Spacera Release"`, with Hardened Runtime on.
-4. Copy `Spacera.app` out of the archive.
-5. `scripts/dmg/make-dmg.sh <path to Spacera.app> dist/Spacera-<ver>.dmg`, which builds the styled installer window. Finder has to be running, and no volume named Spacera can be mounted. The background's source is in `scripts/dmg/`.
-6. `shasum -a 256 dist/Spacera-<ver>.dmg`, and put the result in the release notes so users can check their download.
-7. Attach the DMG to a GitHub Release.
+## Each release
+Run `scripts/release.sh patch` (or `minor`, `major`). Finder has to be running, and no volume named Spacera can be mounted. The script:
+1. Raises `MARKETING_VERSION` by that part (0.1.0 → 0.1.1) and `CURRENT_PROJECT_VERSION` by 1 in `project.yml`. Without a part, it builds the version already there.
+2. Stops if `build/<version>/` already exists, so a published release is never overwritten, or if the `Spacera Release` certificate is missing.
+3. Runs `xcodegen generate` and the unit tests.
+4. Archives a Release build signed with `Spacera Release`, with Hardened Runtime on, into a temporary folder.
+5. Builds the styled installer with `scripts/dmg/make-dmg.sh`. The background's source is in `scripts/dmg/`.
+6. Deletes the archive.
+
+Only the DMG stays in the repo:
+```
+build/<version>/Spacera-<version>.dmg
+```
+
+Then commit the version bump in `project.yml` and attach the DMG to a GitHub Release. If the build fails after the bump, fix it and run `scripts/release.sh` without a part.
 
 ## Checks
 Run these before the first public release, and the first three before every release:

@@ -39,7 +39,7 @@ xcodebuild -project Spacera.xcodeproj -scheme Spacera build
 
 
 ```sh
-xcodebuild -project Spacera.xcodeproj -scheme Spacera run
+open "$(xcodebuild -project Spacera.xcodeproj -scheme Spacera -showBuildSettings 2>/dev/null | sed -n 's/^ *BUILT_PRODUCTS_DIR = //p')/Spacera.app"
 ```
 
 ### Run tests
@@ -53,7 +53,7 @@ xcodebuild test -project Spacera.xcodeproj -scheme Spacera
 
 
 ```sh
-scripts/release.sh  # Not written yet: archive → sign → dmg (docs/08-release.md)
+scripts/release.sh patch   # bump version, test, archive, sign, DMG → build/<version>/ (docs/08-release.md)
 ```
 
 ## Project Layout

@@ -17,7 +17,6 @@ Everything comes from Apple frameworks (SwiftUI, AppKit, Foundation, Darwin, Sec
 
 ## Release integrity
 - Releases are signed with a self-signed certificate and are **not notarized** (see [08-release](08-release.md)), so Apple doesn't vouch for them. The signature only shows that a build came from whoever holds the certificate.
-- Each release publishes the DMG's SHA-256 checksum.
 - The private signing key lives only in the maintainer's Keychain and a secure backup. `.gitignore` excludes key files. A self-signed certificate can't be revoked, so if the key leaks, the only fix is a new certificate.
 
 ## Code signing and entitlements
