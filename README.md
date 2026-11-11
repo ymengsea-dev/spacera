@@ -22,7 +22,7 @@
 - **Testing:** Swift Testing with temporary directory fixtures
 - **Build system:** XcodeGen (configuration-driven project generation)
 - **Updates:** manual download from GitHub Releases (no auto-update for now)
-- **Distribution:** self-signed `.dmg` on GitHub Releases, not notarized (not sandboxed)
+- **Distribution:** ad-hoc signed `.dmg` on GitHub Releases, not notarized (not sandboxed)
 
 ## Getting Started
 

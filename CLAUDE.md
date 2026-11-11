@@ -12,7 +12,7 @@ Full design docs are in [`docs/`](docs/README.md). Read them before making archi
 - Persistence: Codable JSON files in `~/Library/Application Support/Spacera`.
 - Tests: Swift Testing (`@Test`, `#expect`).
 - Project: **XcodeGen** (`project.yml`). Updates: none for now; users download new versions.
-- Distribution: direct download (self-signed `.dmg` on GitHub Releases, not notarized). **Not sandboxed**; the app needs Full Disk Access.
+- Distribution: direct download (ad-hoc signed `.dmg` on GitHub Releases, not notarized; users re-grant Full Disk Access after each update). **Not sandboxed**; the app needs Full Disk Access.
 
 ## Commands
 ```sh
@@ -33,7 +33,7 @@ SpaceraTests/         mirrors the app folders; Fixtures/ builds temporary direct
 ```
 
 ## Rules
-- **Dependencies:** the only approved external dependency is **XcodeGen** (a build tool that never ships in the app). **Ask before adding any other library, package, or tool.** The app must embed no frameworks: self-signed builds have no Team ID, so library validation would refuse them, and it must stay on.
+- **Dependencies:** the only approved external dependency is **XcodeGen** (a build tool that never ships in the app). **Ask before adding any other library, package, or tool.** The app must embed no frameworks: ad-hoc signed builds have no Team ID, so library validation would refuse them, and it must stay on.
 - **Network:** the app makes no network connections. Add no analytics, telemetry, update checks, or other networking.
 - **Project file:** never commit `Spacera.xcodeproj`. Edit `project.yml` and run `xcodegen generate`.
 - **MVVM:**

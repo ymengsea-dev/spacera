@@ -10,7 +10,7 @@
 | 4 | Cleanup service (rules, `SafetyGuard`, `Trasher`, `ActionLog`) | Tests confirm blocked paths are rejected and items end up in the Trash |
 | 5 | Features: Overview → Apps + Detail → Disk Map → Cleanup + Review → Onboarding | Each ViewModel is tested with fake services; manual run looks right |
 | 6 | Snapshot persistence and growth view | The second launch shows the previous results instantly |
-| 7 | `scripts/release.sh` | A self-signed `.dmg` is produced, and replacing the app with a newer build keeps Full Disk Access |
+| 7 | `scripts/release.sh` | An ad-hoc signed `.dmg` is produced in `build/<version>/` |
 
 ## After the MVP
 - A menu bar item showing free space, with an alert when the disk is low.

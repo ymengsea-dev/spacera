@@ -1,34 +1,30 @@
 # 08 · Release
 
-Spacera is distributed **outside the Mac App Store** as a `.dmg` on GitHub Releases. Spacera is free and open source, and the project doesn't plan to pay for the Apple Developer Program, so releases are **signed with a free self-signed certificate and are not notarized**. There is **no auto-update**: users download each new version themselves.
+Spacera is distributed **outside the Mac App Store** as a `.dmg` on GitHub Releases. Spacera is free and open source, and the project doesn't plan to pay for the Apple Developer Program, so releases are **ad-hoc signed and not notarized**. Ad-hoc signing needs no certificate. There is **no auto-update**: users download each new version themselves.
 
-Sparkle was removed on purpose. A self-signed app has no Team ID, so Hardened Runtime's library validation refuses to load an embedded framework like Sparkle. Keeping it would have meant turning library validation off, which isn't worth it for an app that holds Full Disk Access.
+Sparkle was removed on purpose. An ad-hoc signed app has no Team ID, so Hardened Runtime's library validation refuses to load an embedded framework like Sparkle. Keeping it would have meant turning library validation off, which isn't worth it for an app that holds Full Disk Access.
 
 ## Status
-`scripts/release.sh` is written. The signing certificate doesn't exist yet, so the script stops until it is created. `SIGN_IDENTITY=- scripts/release.sh` makes an ad-hoc test build.
+`scripts/release.sh` is written and signs ad-hoc.
 
 ## Signing identity
 | Option | Full Disk Access after an update | Gatekeeper on first open | Use |
 |---|---|---|---|
-| Ad-hoc | **Lost on every update**: the designated requirement is the build's `cdhash` | Blocked until the user allows it | Local builds only |
-| **Self-signed certificate (chosen)** | Expected to be kept: the requirement is the certificate, not the build | Blocked until the user allows it | Public releases |
+| **Ad-hoc (chosen)** | **Lost on every update**: the designated requirement is the build's `cdhash` | Blocked until the user allows it | Public releases; no certificate to create or back up |
+| Self-signed certificate | Expected to be kept: the requirement is the certificate, not the build | Blocked until the user allows it | Not used; a certificate has to be created, backed up, and never lost |
 | Apple Development certificate | Expected to be kept | Blocked until the user allows it | Local testing only |
 | Developer ID + notarization | Kept | **Opens normally** | Not planned; paid membership |
 
 - **Apple Development is not for public releases.** It's meant for development, its certificate name can include the developer's email, and if Apple revokes it, macOS can show users a malware warning and block the app.
-- **Only sign with a certificate that belongs to this project's owner.** Check the owner first, because a Mac can hold old certificates from other teams.
-
-## One-time setup
-In Keychain Access, use **Certificate Assistant → Create a Certificate** to create a self-signed certificate named `Spacera Release`, with the certificate type **Code Signing** and a long validity period. Remove any personal details, because anyone can read them from the app.
-
-**Export it with its private key and back it up.** A new certificate changes the designated requirement, so every user would have to grant Full Disk Access again.
+- **Ad-hoc was chosen over a self-signed certificate on purpose.** Users grant Full Disk Access again after each update, in exchange for no certificate to manage.
+- **If a certificate is ever used, only sign with one that belongs to this project's owner.** Check the owner first, because a Mac can hold old certificates from other teams.
 
 ## Each release
 Run `scripts/release.sh patch` (or `minor`, `major`). Finder has to be running, and no volume named Spacera can be mounted. The script:
 1. Raises `MARKETING_VERSION` by that part (0.1.0 → 0.1.1) and `CURRENT_PROJECT_VERSION` by 1 in `project.yml`. Without a part, it builds the version already there.
-2. Stops if `build/<version>/` already exists, so a published release is never overwritten, or if the `Spacera Release` certificate is missing.
+2. Stops if `build/<version>/` already exists, so a published release is never overwritten.
 3. Runs `xcodegen generate` and the unit tests.
-4. Archives a Release build signed with `Spacera Release`, with Hardened Runtime on, into a temporary folder.
+4. Archives an ad-hoc signed Release build, with Hardened Runtime on, into a temporary folder.
 5. Builds the styled installer with `scripts/dmg/make-dmg.sh`. The background's source is in `scripts/dmg/`.
 6. Deletes the archive.
 
@@ -41,17 +37,17 @@ Then commit the version bump in `project.yml` and attach the DMG to a GitHub Rel
 
 ## Checks
 Run these before the first public release, and the first three before every release:
-- `codesign -dr - Spacera.app` shows a requirement based on the certificate, **not** `cdhash`.
+- `codesign -dv Spacera.app` shows `Signature=adhoc` and `flags=0x10002(adhoc,runtime)`, so Hardened Runtime is on.
 - `codesign -d --entitlements - Spacera.app` shows only `app-sandbox` (false), with **no** `get-task-allow` or `disable-library-validation`.
 - The release build launches, from a copy of the DMG.
-- Replacing the app with a newer signed build keeps **Full Disk Access** granted. Identity checks pass on test builds, but this hasn't been tried with a real grant yet.
+- After replacing the app with a newer build, the app notices that Full Disk Access is gone and asks for it again.
 
 ## What users see
-Gatekeeper blocks the app because it isn't notarized, and the release notes have to explain how to continue. Because each new version is a new download, users repeat steps 1–3 for every version:
+Gatekeeper blocks the app because it isn't notarized, and the release notes have to explain how to continue. Because each new version is a new download with a new ad-hoc identity, users repeat every step for every version:
 1. Open Spacera from Applications and dismiss the warning.
 2. Go to **System Settings → Privacy & Security** and click **Open Anyway**.
 3. Authenticate when asked.
-4. On first install only, grant Full Disk Access when the app asks.
+4. Grant Full Disk Access when the app asks. macOS ties the grant to the build, so it doesn't carry over to a new version.
 
 To update, users download the new DMG from GitHub and replace the app in Applications. The app doesn't check for new versions, because it makes no network connections.
 

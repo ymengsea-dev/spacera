@@ -1,15 +1,15 @@
 #!/bin/zsh
-# Builds a signed release DMG into build/<version>/. The archive is made in a temporary folder and deleted
+# Builds an ad-hoc signed release DMG into build/<version>/. The archive is made in a temporary folder and deleted
 # afterwards, so the DMG is all that stays. See docs/08-release.md.
 #
 # Usage: scripts/release.sh [patch|minor|major]
 #   With a part, raises MARKETING_VERSION in project.yml by that part and CURRENT_PROJECT_VERSION by 1.
 #   Without one, builds the version already in project.yml.
-#   SIGN_IDENTITY=- signs ad-hoc, for local test builds only.
+#   SIGN_IDENTITY=<certificate name> signs with that certificate instead.
 set -euo pipefail
 
 name="Spacera"
-identity="${SIGN_IDENTITY:-Spacera Release}"
+identity="${SIGN_IDENTITY:--}"
 root="${0:A:h:h}"
 cd "$root"
 
@@ -39,8 +39,7 @@ if [[ -e "$out" ]]; then
 fi
 
 if [[ "$identity" != "-" ]] && ! security find-identity -v -p codesigning | grep -qF "\"$identity\""; then
-    echo "No code signing certificate named \"$identity\". Create it first (docs/08-release.md, One-time setup)." >&2
-    echo "For a local test build, run: SIGN_IDENTITY=- scripts/release.sh" >&2
+    echo "No code signing certificate named \"$identity\". Create it first, or leave SIGN_IDENTITY unset to sign ad-hoc." >&2
     exit 1
 fi
 

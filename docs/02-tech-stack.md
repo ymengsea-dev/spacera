@@ -11,8 +11,8 @@
 | Persistence | Codable JSON in `~/Library/Application Support/Spacera` | Simple and transparent; no database needed |
 | Testing | **Swift Testing** in the `SpaceraTests` target | Built into Xcode |
 | Project | **XcodeGen** (`project.yml`) | The project is a short text file; the `.xcodeproj` is generated and never committed |
-| Updates | None for now; users download new versions | Auto-update needs a framework that a self-signed app can't load with library validation on (see [08-release](08-release.md)) |
-| Release | Self-signed certificate, Hardened Runtime, `hdiutil`, GitHub Releases | Direct distribution without a paid Apple Developer membership; not notarized |
+| Updates | None for now; users download new versions | Auto-update needs a framework that an ad-hoc signed app can't load with library validation on (see [08-release](08-release.md)) |
+| Release | Ad-hoc signing, Hardened Runtime, `hdiutil`, GitHub Releases | Direct distribution without a paid Apple Developer membership; not notarized |
 
 ## Platform
 - **Minimum macOS:** 15.0

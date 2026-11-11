@@ -16,14 +16,14 @@ Everything comes from Apple frameworks (SwiftUI, AppKit, Foundation, Darwin, Sec
 - There is no analytics, telemetry, crash uploading, account system, or update check. Scan data never leaves the Mac.
 
 ## Release integrity
-- Releases are signed with a self-signed certificate and are **not notarized** (see [08-release](08-release.md)), so Apple doesn't vouch for them. The signature only shows that a build came from whoever holds the certificate.
-- The private signing key lives only in the maintainer's Keychain and a secure backup. `.gitignore` excludes key files. A self-signed certificate can't be revoked, so if the key leaks, the only fix is a new certificate.
+- Releases are **ad-hoc signed** and **not notarized** (see [08-release](08-release.md)), so Apple doesn't vouch for them. The signature shows that the app wasn't changed after it was built, but not who built it. Anyone can re-sign a modified copy the same way, so users should only download from the project's GitHub Releases.
+- There is no signing key to protect or lose.
 
 ## Code signing and entitlements
 - **Hardened Runtime** is on in Release builds.
 - **Library validation stays on.** **No** `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation`, or `get-task-allow` in Release builds. This is why the app embeds no frameworks: with no Team ID, Hardened Runtime would refuse to load them (see [08-release](08-release.md)).
-- Releases must use the **same signing certificate** every time. macOS ties the Full Disk Access grant to the signature, so ad-hoc signing or a new certificate makes users grant it again.
-- Only sign with a certificate that belongs to the project owner, and never ship a build signed with an Apple Development certificate.
+- macOS ties the Full Disk Access grant to the signature. An ad-hoc identity is the build's `cdhash`, so users grant it again after every update. This is accepted.
+- Never ship a build signed with an Apple Development certificate.
 - **Not sandboxed**, because the core feature needs it. Full Disk Access is granted by the user in System Settings; the app can't grant it to itself.
 
 ## How deletions are guarded
