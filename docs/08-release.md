@@ -1,8 +1,8 @@
 # 08 · Release
 
-Spacera is distributed **outside the Mac App Store** as a `.dmg` on GitHub Releases. The project has no paid Apple Developer Program membership, so releases are **signed with a self-signed certificate and are not notarized**. There is **no auto-update**: users download each new version themselves.
+Spacera is distributed **outside the Mac App Store** as a `.dmg` on GitHub Releases. Spacera is free and open source, and the project doesn't plan to pay for the Apple Developer Program, so releases are **signed with a free self-signed certificate and are not notarized**. There is **no auto-update**: users download each new version themselves.
 
-Sparkle was removed on purpose. A self-signed app has no Team ID, so Hardened Runtime's library validation refuses to load an embedded framework like Sparkle. Keeping it would have meant turning library validation off, which isn't worth it for an app that holds Full Disk Access. Auto-update comes back together with Developer ID.
+Sparkle was removed on purpose. A self-signed app has no Team ID, so Hardened Runtime's library validation refuses to load an embedded framework like Sparkle. Keeping it would have meant turning library validation off, which isn't worth it for an app that holds Full Disk Access.
 
 ## Status
 Not set up yet. The signing certificate and `scripts/release.sh` don't exist yet. Local Release builds are ad-hoc signed.
@@ -13,7 +13,7 @@ Not set up yet. The signing certificate and `scripts/release.sh` don't exist yet
 | Ad-hoc | **Lost on every update**: the designated requirement is the build's `cdhash` | Blocked until the user allows it | Local builds only |
 | **Self-signed certificate (chosen)** | Expected to be kept: the requirement is the certificate, not the build | Blocked until the user allows it | Public releases |
 | Apple Development certificate | Expected to be kept | Blocked until the user allows it | Local testing only |
-| Developer ID + notarization | Kept | **Opens normally** | Later; paid membership |
+| Developer ID + notarization | Kept | **Opens normally** | Not planned; paid membership |
 
 - **Apple Development is not for public releases.** It's meant for development, its certificate name can include the developer's email, and if Apple revokes it, macOS can show users a malware warning and block the app.
 - **Only sign with a certificate that belongs to this project's owner.** Check the owner first, because a Mac can hold old certificates from other teams.
@@ -50,5 +50,5 @@ To update, users download the new DMG from GitHub and replace the app in Applica
 
 On macOS 15, Control-click → Open no longer bypasses this. Homebrew's official cask repository is not an alternative, because it no longer accepts apps that fail Gatekeeper.
 
-## Moving to Developer ID later
-Joining the Apple Developer Program removes the Gatekeeper step, and notarization then fits in before the DMG is published. A Team ID also lets Sparkle load with library validation on, so auto-update can come back at the same time; adding it requires the project owner's approval and updates to [09-security](09-security.md). The signature change means existing users have to grant Full Disk Access once more.
+## If the project ever moves to Developer ID
+This isn't planned. Joining the Apple Developer Program would remove the Gatekeeper step, and notarization then fits in before the DMG is published. A Team ID also lets Sparkle load with library validation on, so auto-update can come back at the same time; adding it requires the project owner's approval and updates to [09-security](09-security.md). The signature change means existing users have to grant Full Disk Access once more.

@@ -31,7 +31,7 @@ A native, standalone Mac app that does the same job:
 - Scan snapshots, to show growth since the last scan.
 
 ## Non-goals (for now)
-- Auto-update, until the app moves to Developer ID signing (see [08-release](08-release.md)).
+- Auto-update, because a self-signed app can't load Sparkle with library validation on (see [08-release](08-release.md)).
 - Mac App Store distribution, because the sandbox would block the core feature.
 - Deleting files permanently (bypassing the Trash).
 - Cloud features, accounts, or telemetry.

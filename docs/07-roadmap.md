@@ -13,7 +13,6 @@
 | 7 | `scripts/release.sh` | A self-signed `.dmg` is produced, and replacing the app with a newer build keeps Full Disk Access |
 
 ## After the MVP
-- Developer ID signing and notarization, with auto-update through Sparkle (see [08-release](08-release.md)).
 - A menu bar item showing free space, with an alert when the disk is low.
 - Scheduled background scans (`SMAppService` login item).
 - Duplicate-file finder.
